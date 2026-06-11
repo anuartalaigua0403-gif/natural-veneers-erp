@@ -1405,7 +1405,6 @@ html.light .cc:hover{background:#fff;}
 <div class="msec" id="sec-cfg">
   <div class="snav">
     <div class="stab on" id="st-cfg-usr" onclick="switchSub('cfg','usr')">👥 Usuarios y Permisos</div>
-    <div class="stab" id="st-cfg-imp" onclick="switchSub('cfg','imp')">📥 Importar / Exportar</div>
   </div>
   <div class="ssec on" id="ss-cfg-usr" style="padding-top:12px;">
     <div class="card">
@@ -1431,42 +1430,6 @@ html.light .cc:hover{background:#fff;}
           </thead>
           <tbody id="permTableBody"></tbody>
         </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── IMPORTAR / EXPORTAR ── -->
-  <div class="ssec" id="ss-cfg-imp" style="padding-top:12px;">
-    <div class="card">
-      <div class="card-hdr">📥 Importar casos desde Excel</div>
-      <div style="padding:16px 18px;">
-        <div style="font-size:12px;color:var(--tx2);margin-bottom:14px;line-height:1.6;">
-          Usa la plantilla oficial <strong>NaturalVeneers_ImportTemplate.xlsx</strong> para cargar casos en bloque.<br>
-          Los casos importados se agregan a los existentes sin borrar ningún dato.
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-          <label class="btn btn-p" style="cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-size:12px;">
-            📂 Seleccionar archivo Excel
-            <input type="file" id="xlsxImportInput" accept=".xlsx,.xls" style="display:none;" onchange="importFromExcel(this)">
-          </label>
-          <span id="xlsxImportStatus" style="font-size:11px;color:var(--tx3);"></span>
-        </div>
-        <div id="xlsxImportPreview" style="margin-top:16px;display:none;">
-          <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:8px;">Vista previa de la importación:</div>
-          <div id="xlsxImportTable" style="overflow-x:auto;max-height:320px;overflow-y:auto;border:1px solid var(--brd);border-radius:8px;"></div>
-          <div style="display:flex;gap:10px;margin-top:12px;">
-            <button class="btn btn-ok" id="xlsxConfirmBtn" onclick="confirmImport()" style="font-size:12px;">✅ Confirmar importación</button>
-            <button class="btn btn-g" onclick="cancelImport()" style="font-size:12px;">✗ Cancelar</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:12px;">
-      <div class="card-hdr">⬇️ Exportar datos</div>
-      <div style="padding:14px 18px;display:flex;gap:12px;flex-wrap:wrap;">
-        <button class="btn btn-ok btn-sm" onclick="exportAllCasesExcel()" style="font-size:12px;">📊 Exportar todos los casos (Excel)</button>
-        <button class="btn btn-g btn-sm" onclick="exportCSV()" style="font-size:12px;">📋 Exportar finanzas (Excel)</button>
       </div>
     </div>
   </div>
@@ -3946,31 +3909,54 @@ function openStatPopup(type,triggerEl){
   const title=type==='active'?'🔵 Casos Activos':type==='delayed'?'🔴 Casos Retrasados':'✅ Completados Hoy';
   document.getElementById('statPopupTitle').textContent=title;
   document.getElementById('statPopupList').innerHTML=cases.length===0?
-    '<div class="notif-empty">Sin casos para mostrar.</div>':
-    cases.map(o=>{
-      const tot=ordTotal(o);
-      const stg=STAGES.find(s=>s.id===o.status)||{lbl:o.status,col:'#6b7280'};
-      return`<div class="stat-popup-item" onclick="closeDet();openDet('${o.id}');closeStatPopup();" style="cursor:pointer;"><div class="spi-id">${o.id}</div><div class="spi-name">${o.patient||'—'} · ${o.dentist||'—'}</div><div class="spi-meta"><span style="color:${stg.col}">${stg.lbl}</span>${tot!=null?' · '+fmtP(tot,o.currency):''} · ${o.city||''}</div></div>`;
-    }).join('');
+    '<div class="notif-empty">Sin casos en esta categoría</div>':
+    cases.map(o=>`<div class="stat-popup-item" onclick="closeStatPopup();openDet('${o.id}')">
+      <div class="spi-id">${o.id}</div>
+      <div class="spi-name">${o.dentist} — ${o.patient}</div>
+      <div class="spi-meta"><span>${o.type||'—'}</span><span>${o.status}</span></div>
+    </div>`).join('');
+  // Position below trigger
+  if(triggerEl){
+    const r=triggerEl.getBoundingClientRect();
+    popup.style.top=(r.bottom+6)+'px';
+    popup.style.left=Math.min(r.left,window.innerWidth-310)+'px';
+  }
   popup.classList.add('open');
 }
 function closeStatPopup(){
-  const popup=document.getElementById('statPopup');
-  if(popup)popup.classList.remove('open');
+  document.getElementById('statPopup')?.classList.remove('open');
 }
+// Close stat popup when clicking outside it
+document.addEventListener('click', function(e){
+  const popup = document.getElementById('statPopup');
+  if(!popup||!popup.classList.contains('open'))return;
+  if(popup.contains(e.target))return;
+  if(e.target.closest('.hstat'))return;
+  closeStatPopup();
+}, true);
 
-// ════ DELAY NOTIFICATIONS ══════════════════════════════════════════════════════════════════════════
+// ════ NOTIFICACIÓN AUTOMÁTICA: +3 DÍAS ═══════════════════════════════════════════════
 function checkDelayNotifications(){
-  const sentKey='nv_delay_notifs_sent';
-  const sent=JSON.parse(localStorage.getItem(sentKey)||'{}');
+  if(!currentUser)return;
+  const sentKey='nv_delay_sent';
+  let sent={};
+  try{sent=JSON.parse(localStorage.getItem(sentKey)||'{}');}catch(e){}
+  const threshold=72*3600000;
+  const now=Date.now();
   let changed=false;
-  const users=JSON.parse(localStorage.getItem('nv_users')||'[]');
-  orders.filter(o=>!TERM.includes(o.status)&&!o.isArchived).forEach(o=>{
-    const hrs=(Date.now()-new Date(o.createdAt).getTime())/3600000;
-    if(hrs>72&&!sent[o.id]){
-      const resp=o.responsibles?.[o.status];
-      if(resp){
-        const ru=users.find(u=>u.name===resp);
+  orders.forEach(o=>{
+    if(TERM.includes(o.status)||o.isArchived)return;
+    const age=now-new Date(o.createdAt).getTime();
+    if(age>=threshold&&!sent[o.id]){
+      const users=JSON.parse(localStorage.getItem('nv_users')||'[]');
+      const admins=users.filter(u=>u.role==='admin');
+      admins.forEach(u=>{
+        addNotif(u.email,`⏰ El caso ${o.id} (${o.dentist} — ${o.patient}) lleva más de 3 días en producción sin despacharse.`,o.id);
+      });
+      const curStage=o.status;
+      const respName=o.responsibles?.[curStage];
+      if(respName){
+        const ru=users.find(u=>u.name===respName&&u.role!=='admin');
         if(ru)addNotif(ru.email,`⏰ Caso ${o.id} asignado a ti lleva +3 días en producción.`,o.id);
       }
       sent[o.id]=new Date().toISOString();
@@ -3978,177 +3964,6 @@ function checkDelayNotifications(){
     }
   });
   if(changed)localStorage.setItem(sentKey,JSON.stringify(sent));
-}
-
-// ════ EXCEL IMPORT ═════════════════════════════════════════════════════════════════════════════════
-let _xlsxPending=[];
-
-function importFromExcel(input){
-  const file=input?.files?.[0];
-  if(!file){return;}
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      // Data starts at row index 5 (skip title, sections, headers, notice, example)
-      const dataRows=rows.slice(5).filter(r=>r[0]||r[1]);
-      const errors=[];
-      _xlsxPending=dataRows.map((r,i)=>{
-        const rowNum=i+6;
-        const dentist=String(r[0]||'').trim();
-        const patient=String(r[1]||'').trim();
-        const city=String(r[3]||'').trim();
-        if(!dentist)errors.push(`Fila ${rowNum}: Odontólogo requerido`);
-        if(!patient)errors.push(`Fila ${rowNum}: Paciente requerido`);
-        if(!city)errors.push(`Fila ${rowNum}: Ciudad requerida`);
-        // Build items
-        const items=[];
-        [[8,9,10,11],[12,13,14,15],[16,17,18,19]].forEach(([pi,ui,pri,di])=>{
-          const prod=String(r[pi]||'').trim();
-          if(prod){
-            const units=parseFloat(r[ui])||1;
-            const unitPrice=parseFloat(String(r[pri]||'').replace(/[^0-9.]/g,''))||0;
-            const discount=parseFloat(r[di])||0;
-            items.push({product:prod,units,unitPrice,discount,discountType:'%'});
-          }
-        });
-        // Delivery date
-        let deliveryDate='';
-        const rawDate=r[6];
-        if(rawDate instanceof Date){deliveryDate=rawDate.toISOString().slice(0,10);}
-        else if(rawDate){
-          const parts=String(rawDate).split('/');
-          if(parts.length===3)deliveryDate=`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-        }
-        const now=new Date().toISOString();
-        const id='NV-IMPORT-'+(counter+_xlsxPending.length+1);
-        return{
-          id,
-          internalId:counter+_xlsxPending.length+1,
-          dentist,
-          patient,
-          patientAge:'',
-          phone:String(r[2]||'').trim(),
-          city,
-          country:String(r[4]||'Colombia').trim()||'Colombia',
-          currency:String(r[7]||'COP').trim().toUpperCase()==='USD'?'USD':'COP',
-          urgency:String(r[5]||'normal').trim().toLowerCase()||'normal',
-          deliveryDate,
-          status:'received',
-          responsibles:{received:currentUser?.name||''},
-          colorSolicitado:'',colorSustrato:'',aditamentos:'',impresion:'',modelos:'',cubeta:'',registroMordida:'',fotos:'',
-          advanceAmount:parseFloat(String(r[20]||'').replace(/[^0-9.]/g,''))||0,
-          advanceCurrency:'COP',
-          advanceMethod:String(r[21]||'').trim(),
-          advanceDate:String(r[22]||'').trim(),
-          additionalPayments:[],
-          items:items.length?items:[],
-          notes:String(r[23]||'').trim(),
-          observations:'',
-          isWarranty:String(r[24]||'').trim().toUpperCase()==='SI',
-          warrantyReason:String(r[25]||'').trim(),
-          warrantyArea:String(r[26]||'').trim(),
-          originalCaseId:String(r[27]||'').trim(),
-          history:[{stage:'received',at:now,by:currentUser?.name||'Importado'}],
-          shipping:{carrier:'',trackingNumber:'',dispatchDate:''},
-          invoiced:false,invoiceNumber:'',invoiceDate:'',
-          fullyPaid:false,paidDate:'',
-          insumos:[],comments:[],
-          isArchived:false,archivedAt:null,
-          completedAt:null,lifecycleStatus:'active',
-          createdAt:now
-        };
-      });
-      renderImportPreview(errors);
-    }catch(err){
-      console.error('[importFromExcel]',err);
-      document.getElementById('xlsxImportTable').innerHTML=`<div style="color:#f87171;padding:12px;">Error al leer el archivo: ${err.message}</div>`;
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function renderImportPreview(errors){
-  const el=document.getElementById('xlsxImportTable');
-  if(!el)return;
-  const preview=document.getElementById('xlsxImportPreview');
-  if(!_xlsxPending.length){el.innerHTML='<div style="color:var(--tx3);padding:12px;">No se encontraron casos válidos en el archivo.</div>';if(preview)preview.style.display='block';return;}
-  const errHtml=errors.length?`<div style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#f87171;">${errors.map(e=>`⚠ ${e}`).join('<br>')}</div>`:'';
-  const rows=_xlsxPending.map((o,i)=>{
-    const tot=ordTotal(o);
-    const urgColor=o.urgency==='alta'?'#f87171':o.urgency==='media'?'#fbbf24':'#34d399';
-    return`<tr>
-      <td style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--accent);">${i+1}</td>
-      <td style="padding:6px 8px;font-size:11px;">${o.dentist}</td>
-      <td style="padding:6px 8px;font-size:11px;">${o.patient}</td>
-      <td style="padding:6px 8px;font-size:11px;">${o.city}</td>
-      <td style="padding:6px 8px;font-size:11px;"><span style="background:rgba(99,102,241,.15);color:${urgColor};padding:2px 6px;border-radius:4px;font-size:10px;">${o.urgency}</span></td>
-      <td style="padding:6px 8px;font-size:11px;">${o.items.length} producto(s)</td>
-      <td style="padding:6px 8px;font-size:11px;">${tot!=null?fmtP(tot,o.currency):'—'}</td>
-      <td style="padding:6px 8px;font-size:11px;">${o.deliveryDate||'—'}</td>
-    </tr>`;
-  }).join('');
-  el.innerHTML=`${errHtml}<table style="width:100%;border-collapse:collapse;">
-    <thead><tr style="border-bottom:2px solid var(--brd);">
-      <th style="padding:6px 8px;font-size:10px;color:var(--tx3);text-align:left;">#</th>
-      <th style="padding:6px 8px;font-size:10px;color:var(--tx3);text-align:left;">Odontólogo</th>
-      <th style="padding:6px 8px;font-size:10px;color:var(--tx3);text-align:left;">Paciente</th>
-      <th style="padding:6px 8px;font-size:10px;color:var(--tx3);text-align:left;">Ciudad</th>
-      <th style="padding:6px 8px;font-size:10px;color:var(--tx3);text-align:left;">Urgencia</th>
-      <th style="padding:6px 8px;font-size:10px;color:var(--tx3);text-align:left;">Productos</th>
-      <th style="padding:6px 8px;font-size:10px;color:var(--tx3);text-align:left;">Total</th>
-      <th style="padding:6px 8px;font-size:10px;color:var(--tx3);text-align:left;">Entrega</th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
-  <div style="margin-top:12px;font-size:11px;color:var(--tx3);">✅ ${_xlsxPending.length} caso(s) listos para importar${errors.length?' · ⚠ '+errors.length+' advertencia(s)':''}</div>`;
-  const pv=document.getElementById('xlsxImportPreview');
-  if(pv)pv.style.display='block';
-}
-
-function confirmImport(){
-  if(!_xlsxPending.length)return;
-  _xlsxPending.forEach(o=>{
-    o.id='NV-'+String(counter+1).padStart(4,'0');
-    o.internalId=counter+1;
-    orders.unshift(o);
-    counter++;
-  });
-  save();
-  _xlsxPending=[];
-  document.getElementById('xlsxImportTable').innerHTML='<div style="color:#34d399;padding:12px;">✅ Importación completada exitosamente.</div>';
-  const pvC=document.getElementById('xlsxImportPreview');
-  if(pvC)setTimeout(()=>{pvC.style.display='none';},2000);
-  renderAll();
-  showSec('op');
-}
-
-function cancelImport(){
-  _xlsxPending=[];
-  document.getElementById('xlsxImportTable').innerHTML='';
-  const pvX=document.getElementById('xlsxImportPreview');
-  if(pvX)pvX.style.display='none';
-  const fi=document.getElementById('xlsxImportInput');
-  if(fi)fi.value='';
-}
-
-function exportAllCasesExcel(){
-  const wb=XLSX.utils.book_new();
-  const headers=['ID','Odontólogo','Paciente','Edad','Teléfono','Ciudad','País','Moneda','Urgencia','Fecha Entrega','Estado','Etapa Ciclo','Total','Abono','Balance','Responsable Actual','Observaciones','Notas','Garantía','Fecha Creación'];
-  const rows=orders.map(o=>{
-    const tot=ordTotal(o)||0;
-    const paid=(o.advanceAmount||0)+(o.additionalPayments||[]).reduce((s,p)=>s+(p.amount||0),0);
-    const balance=tot-paid;
-    const stage=STAGES.find(s=>s.id===o.status)||{lbl:o.status};
-    const respActual=o.responsibles?.[o.status]||'—';
-    return[o.id,o.dentist||'',o.patient||'',o.patientAge||'',o.phone||'',o.city||'',o.country||'',o.currency||'COP',o.urgency||'normal',o.deliveryDate||'',stage.lbl,o.lifecycleStatus||'active',tot,paid,balance,respActual,o.observations||'',o.notes||'',o.isWarranty?'Sí':'No',o.createdAt?o.createdAt.slice(0,10):''];
-  });
-  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
-  ws['!cols']=headers.map((_,i)=>({wch:i===1||i===2?20:i===16||i===17?30:14}));
-  XLSX.utils.book_append_sheet(wb,ws,'Casos NV');
-  XLSX.writeFile(wb,'NaturalVeneers_Casos_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 </script>
 </body>
