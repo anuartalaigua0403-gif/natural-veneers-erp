@@ -3191,11 +3191,10 @@ function exportProdExcel(){
 }
 
 // ════════════════════════════════════════════
-//  INIT
+//  INIT (date + data load — auth runs after all declarations)
 // ════════════════════════════════════════════
 document.getElementById('hDate').textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 load();
-initAuth().then(()=>checkSession());
 
 // ════════════════════════════════════════════
 //  DASHBOARD (rebuild 2026-06-10)
@@ -3965,6 +3964,9 @@ function checkDelayNotifications(){
   });
   if(changed)localStorage.setItem(sentKey,JSON.stringify(sent));
 }
+
+// ════ INIT AUTH (must be last — all consts must be initialized first) ════
+initAuth().then(()=>checkSession());
 </script>
 </body>
 </html>
