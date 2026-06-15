@@ -6,7 +6,7 @@
   "description": "Panel operacional Natural Veneers con: multi-productos por caso, cotización con descuento, exportar Excel, despacho con transportadora/guía, responsable obligatorio por etapa, trazabilidad completa."
 }
 </script>
-<html lang="es">
+<html lang="es">h
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -1620,7 +1620,7 @@ body.role-contable button[onclick*="deleteOrder"]{display:none!important;}
     <div class="mb">
       <div class="frow">
         <div class="fg" style="max-width:180px;"><label class="flbl">ID Interno <span style="font-size:9px;color:var(--tx3);">(opcional)</span></label><input class="fi" id="nIntId" placeholder="Ej: 2024-089, REF-05..."></div>
-        <div class="fg" style="position:relative;"><label class="flbl req">Dentista / Clínica</label><div style="display:flex;gap:6px;align-items:flex-start;"><div style="position:relative;flex:1;"><input class="fi" id="nDentSearch" placeholder="Buscar por nombre o cédula..." oninput="nvSearchCliente(this.value)" onblur="setTimeout(nvCloseClienteDropdown,200)" autocomplete="off"><input type="hidden" id="nDent"><input type="hidden" id="nClienteId"><div id="nDentDrop" style="display:none;position:absolute;z-index:9999;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:180px;overflow-y:auto;width:100%;top:calc(100% + 2px);left:0;"></div></div><button type="button" onclick="nvOpenNuevoCliente()" title="Crear nuevo cliente" style="flex-shrink:0;height:36px;padding:0 10px;border-radius:6px;background:var(--acc);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">+ Nuevo</button></div></div>
+        <div class="fg" style="position:relative;"><label class="flbl req">Dentista / Clínica</label><div style="display:flex;gap:6px;align-items:flex-start;"><div style="position:relative;flex:1;"><input class="fi" id="nDentSearch" placeholder="Buscar por nombre o cédula..." oninput="nvSearchCliente(this.value)" onblur="setTimeout(nvCloseClienteDropdown,200)" autocomplete="off"><input type="hidden" id="nDent"><input type="hidden" id="nClienteId"><div id="nDentDrop" style="display:none;position:absolute;z-index:9999;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:180px;overflow-y:auto;width:100%;top:calc(100% + 2px);left:0;"></div></div><button type="button" onclick="nvOpenNuevoCliente()" title="Crear nuevo cliente" style="flex-shrink:0;height:36px;padding:0 10px;border-radius:6px;background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">+ Nuevo</button></div></div>
         <div class="fg" style="display:grid;grid-template-columns:1fr 80px;gap:7px;">
           <div class="fg"><label class="flbl req">Paciente</label><input class="fi" id="nPat" placeholder="Apellido, Nombre"></div>
           <div class="fg"><label class="flbl">Edad</label><input class="fi" id="nAge" type="number" min="1" max="120" placeholder="—"></div>
@@ -4605,7 +4605,7 @@ window.nvCloseClienteDropdown=function(){
     <div id="nvNC_err" style="color:#e53e3e;font-size:12px;margin-top:10px;min-height:16px;"></div>
     <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end;">
       <button onclick="nvCloseNuevoCliente()" style="padding:8px 18px;border-radius:6px;border:1px solid #d1d5db;background:#f9fafb;color:#374151;font-size:13px;cursor:pointer;">Cancelar</button>
-      <button id="nvNC_btn" onclick="nvGuardarCliente()" style="padding:8px 22px;border-radius:6px;border:none;background:var(--acc);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">Guardar</button>
+      <button id="nvNC_btn" onclick="nvGuardarCliente()" style="padding:8px 22px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">Guardar</button>
     </div>
   </div>
 </div>
