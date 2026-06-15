@@ -1259,6 +1259,7 @@ body.role-contable button[onclick*="deleteOrder"]{display:none!important;}
         <div style="flex:1;"></div>
         <div id="histStats" style="font-size:11px;color:var(--tx2);"></div>
       </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;"><span style="font-size:13px;color:var(--txt2);">Historial completo guardado en base de datos</span><button onclick="nvExportCasosExcel()" style="padding:8px 18px;border-radius:6px;background:#16a34a;border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;"><span>⬇</span><span>Exportar Excel</span></button></div>
       <div id="histList"></div>
     </div>
   </div>
@@ -2159,7 +2160,7 @@ function load(){
   }catch(e){orders=JSON.parse(JSON.stringify(SAMPLE)).map(migrate);}
   try{const p=localStorage.getItem('nv_prices');if(p)customPrices=JSON.parse(p);}catch(e){}
 }
-function save(){localStorage.setItem('nv_v6',JSON.stringify({orders,counter,cur,invCounter}));}
+function save(){localStorage.setItem('nv_v6',JSON.stringify({orders,counter,cur,invCounter}));if(typeof nvSyncCasosSupabase==='function')nvSyncCasosSupabase();}
 function savePrices(){localStorage.setItem('nv_prices',JSON.stringify(customPrices));}
 
 
@@ -4496,6 +4497,95 @@ window.nvCloseClienteDropdown=function(){
         nvCloseNuevoCliente();
       }catch(e){errEl.textContent='Error inesperado: '+e.message;btn.disabled=false;btn.textContent='Guardar';}
       finally{if(btn.disabled){btn.disabled=false;btn.textContent='Guardar';}}
+    };
+    // ═══ SUPABASE CASOS SYNC ═══
+    function nvMapCasoToDb(o){
+      var total=0;
+      if(o.items)o.items.forEach(function(it){var s=(it.unitPrice||0)*(it.units||1);if(it.discountType==='%')s*=(1-(it.discount||0)/100);else s-=(it.discount||0);total+=s;});
+      return{id:o.id,internal_id:o.internalId||null,created_at:o.createdAt||null,updated_at:new Date().toISOString(),
+        dentist:o.dentist||null,cliente_id:null,patient:o.patient||null,patient_age:o.patientAge||null,
+        phone:o.phone||null,city:o.city||null,country:o.country||null,urgency:o.urgency||null,
+        delivery_date:o.deliveryDate||null,color_solicitado:o.colorSolicitado||null,color_sustrato:o.colorSustrato||null,
+        aditamentos:o.aditamentos||null,impresion:o.impresion||null,notes:o.notes||null,currency:o.currency||'COP',
+        modelos_sup:!!(o.modelos&&o.modelos.sup),modelos_inf:!!(o.modelos&&o.modelos.inf),
+        cubeta_sup:!!(o.cubeta&&o.cubeta.sup),cubeta_inf:!!(o.cubeta&&o.cubeta.inf),
+        registro_mordida:!!o.registroMordida,fotos:!!o.fotos,
+        items:o.items||[],total:total,
+        advance_amount:o.advanceAmount||0,advance_currency:o.advanceCurrency||null,
+        advance_method:o.advanceMethod||null,advance_date:o.advanceDate||null,
+        additional_payments:o.additionalPayments||[],
+        invoiced:!!o.invoiced,invoice_number:o.invoiceNumber||null,invoice_date:o.invoiceDate||null,
+        fully_paid:!!o.fullyPaid,paid_date:o.paidDate||null,
+        resp_recibido:o.responsibles&&o.responsibles.received||null,
+        resp_digital:o.responsibles&&o.responsibles.digital||null,
+        resp_impresion:o.responsibles&&o.responsibles.printing||null,
+        resp_inyeccion:o.responsibles&&o.responsibles.injection||null,
+        resp_ceramica:o.responsibles&&o.responsibles.ceramic||null,
+        resp_calidad:o.responsibles&&o.responsibles.quality||null,
+        history:o.history||[],comments:o.comments||[],
+        shipping_carrier:o.shipping&&o.shipping.carrier||null,
+        shipping_dispatch_date:o.shipping&&o.shipping.dispatchDate||null,
+        shipping_tracking:o.shipping&&o.shipping.trackingNumber||null,
+        completed_at:o.completedAt||null,status:o.status||'received',
+        lifecycle_status:o.lifecycleStatus||'active',is_warranty:!!o.isWarranty,
+        warranty_reason:o.warrantyReason||null,warranty_area:o.warrantyArea||null,
+        original_case_id:o.originalCaseId||null,is_archived:!!o.isArchived,archived_at:o.archivedAt||null};
+    }
+    var _nvSyncTimer=null;
+    function nvSyncCasosSupabase(){
+      clearTimeout(_nvSyncTimer);
+      _nvSyncTimer=setTimeout(async function(){
+        try{
+          if(!orders||!orders.length)return;
+          var rows=orders.map(nvMapCasoToDb);
+          await _sb.from('casos').upsert(rows,{onConflict:'id'});
+        }catch(e){console.warn('nvSyncCasos:',e);}
+      },2000);
+    }
+    window.nvExportCasosExcel=async function(){
+      var btn=event&&event.target;if(btn){btn.disabled=true;btn.textContent='Cargando...';}
+      try{
+        var r=await _sb.from('casos').select('*').order('created_at',{ascending:false});
+        if(r.error)throw r.error;
+        var data=r.data||[];
+        if(!data.length){alert('No hay casos en la base de datos todavía.');return;}
+        var rows=data.map(function(c){
+          return{
+            'Consecutivo':c.id,'ID Interno':c.internal_id||'',
+            'Fecha Recepción':c.created_at?new Date(c.created_at).toLocaleDateString('es-CO'):'',
+            'Fecha Entrega':c.delivery_date||'',
+            'Dentista/Clínica':c.dentist||'','Paciente':c.patient||'',
+            'Edad':c.patient_age||'','Teléfono':c.phone||'',
+            'Ciudad':c.city||'','País':c.country||'',
+            'Urgencia':c.urgency||'','Estado':c.status||'',
+            'Moneda':c.currency||'','Total':c.total||0,
+            'Anticipo':c.advance_amount||0,'Método Anticipo':c.advance_method||'',
+            'Recibido por':c.resp_recibido||'','Digital/CAD por':c.resp_digital||'',
+            'Impresión por':c.resp_impresion||'','Inyección por':c.resp_inyeccion||'',
+            'Cerámica por':c.resp_ceramica||'','Control Calidad por':c.resp_calidad||'',
+            'Color Solicitado':c.color_solicitado||'','Color Sustrato':c.color_sustrato||'',
+            'Aditamentos':c.aditamentos||'','Tipo Impresión':c.impresion||'',
+            'Modelos Sup':c.modelos_sup?'Sí':'No','Modelos Inf':c.modelos_inf?'Sí':'No',
+            'Cubeta Sup':c.cubeta_sup?'Sí':'No','Cubeta Inf':c.cubeta_inf?'Sí':'No',
+            'Reg. Mordida':c.registro_mordida?'Sí':'No','Fotos':c.fotos?'Sí':'No',
+            'Productos':Array.isArray(c.items)?c.items.map(function(it){return it.units+'x '+it.product;}).join(' | '):'',
+            'Facturado':c.invoiced?'Sí':'No','N° Factura':c.invoice_number||'',
+            'Pagado':c.fully_paid?'Sí':'No',
+            'Transportadora':c.shipping_carrier||'',
+            'Fecha Despacho':c.shipping_dispatch_date||'','Tracking':c.shipping_tracking||'',
+            'Notas':c.notes||'',
+            'Repetición/Garantía':c.is_warranty?'Sí':'No','Motivo Garantía':c.warranty_reason||'',
+            'Estado Ciclo':c.lifecycle_status||''
+          };
+        });
+        var wb=XLSX.utils.book_new();
+        var ws=XLSX.utils.json_to_sheet(rows);
+        ws['!cols']=[{wch:14},{wch:12},{wch:16},{wch:14},{wch:22},{wch:20},{wch:6},{wch:14},{wch:12},{wch:10},{wch:10},{wch:14},{wch:8},{wch:12},{wch:12},{wch:16},{wch:16},{wch:16},{wch:16},{wch:16},{wch:16},{wch:16},{wch:14},{wch:14},{wch:18},{wch:14},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:8},{wch:35},{wch:10},{wch:12},{wch:10},{wch:14},{wch:14},{wch:14},{wch:30},{wch:10},{wch:20},{wch:12}];
+        XLSX.utils.book_append_sheet(wb,ws,'Historial Casos');
+        var fecha=new Date().toISOString().slice(0,10);
+        XLSX.writeFile(wb,'HistorialCasos_'+fecha+'.xlsx');
+      }catch(e){alert('Error al exportar: '+e.message);}
+      finally{if(btn){btn.disabled=false;btn.innerHTML='<span>⬇</span><span>Exportar Excel</span>';}}
     };
 });;
 </script>
