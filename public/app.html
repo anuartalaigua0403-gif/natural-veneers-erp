@@ -949,6 +949,7 @@ html.light .cc:hover{background:#fff;}
 .nv-lf-err{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.22);border-radius:6px;padding:9px 13px;color:#fca5a5;font-size:0.8rem;margin-bottom:14px;display:none;}
 .nv-lf-err.on{display:block;}
 .nv-lf-foot{margin-top:36px;font-size:0.71rem;color:#1a2f42;text-align:center;}
+#loginScreen{display:none!important;}
 /* ═══ PERMISOS POR ROL ═══ */
 body.role-auxiliar #mt-pr,body.role-auxiliar #mt-da,body.role-auxiliar #mt-cfg,
 body.role-contable #mt-pr,body.role-contable #mt-da,body.role-contable #mt-cfg{display:none!important;}
@@ -4298,8 +4299,13 @@ function nvShowLogin(){
 }
 function nvForgot(){alert("Para restablecer tu contrasena contacta al administrador:\nanuartalaigua0403@gmail.com");}
 window.addEventListener("DOMContentLoaded",function(){
-  var orig=window.doLogout;
-  window.doLogout=function(){try{if(orig)orig();}catch(e){}nvShowLogin();};
+  // Override original login system to use our premium screen
+  window.showLoginScreen=function(){nvShowLogin();};
+  window.doLogout=function(){nvShowLogin();};
+  // Hide original loginScreen permanently
+  var ol=document.getElementById("loginScreen");
+  if(ol)ol.style.setProperty("display","none","important");
+  // Check nv_session
   var stored=localStorage.getItem("nv_session")||sessionStorage.getItem("nv_session");
   if(stored){
     try{
