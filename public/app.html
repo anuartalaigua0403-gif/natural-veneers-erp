@@ -1619,7 +1619,7 @@ body.role-contable button[onclick*="deleteOrder"]{display:none!important;}
     <div class="mb">
       <div class="frow">
         <div class="fg" style="max-width:180px;"><label class="flbl">ID Interno <span style="font-size:9px;color:var(--tx3);">(opcional)</span></label><input class="fi" id="nIntId" placeholder="Ej: 2024-089, REF-05..."></div>
-        <div class="fg" style="position:relative;"><label class="flbl req">Dentista / Clínica</label><input class="fi" id="nDentSearch" placeholder="Buscar por nombre o cédula..." oninput="nvSearchCliente(this.value)" onblur="setTimeout(nvCloseClienteDropdown,200)" autocomplete="off"><input type="hidden" id="nDent"><input type="hidden" id="nClienteId"><div id="nDentDrop" style="display:none;position:absolute;z-index:9999;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:180px;overflow-y:auto;width:100%;top:calc(100% + 2px);left:0;"></div></div>
+        <div class="fg" style="position:relative;"><label class="flbl req">Dentista / Clínica</label><div style="display:flex;gap:6px;align-items:flex-start;"><div style="position:relative;flex:1;"><input class="fi" id="nDentSearch" placeholder="Buscar por nombre o cédula..." oninput="nvSearchCliente(this.value)" onblur="setTimeout(nvCloseClienteDropdown,200)" autocomplete="off"><input type="hidden" id="nDent"><input type="hidden" id="nClienteId"><div id="nDentDrop" style="display:none;position:absolute;z-index:9999;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:180px;overflow-y:auto;width:100%;top:calc(100% + 2px);left:0;"></div></div><button type="button" onclick="nvOpenNuevoCliente()" title="Crear nuevo cliente" style="flex-shrink:0;height:36px;padding:0 10px;border-radius:6px;background:var(--acc);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">+ Nuevo</button></div></div>
         <div class="fg" style="display:grid;grid-template-columns:1fr 80px;gap:7px;">
           <div class="fg"><label class="flbl req">Paciente</label><input class="fi" id="nPat" placeholder="Apellido, Nombre"></div>
           <div class="fg"><label class="flbl">Edad</label><input class="fi" id="nAge" type="number" min="1" max="120" placeholder="—"></div>
@@ -4438,7 +4438,86 @@ window.nvCloseClienteDropdown=function(){
     },50);
   };
 })();
+    // ═══ NUEVO CLIENTE MODAL ═══
+    window.nvOpenNuevoCliente=function(){
+      document.getElementById('nvNuevoClienteModal').style.display='flex';
+      document.getElementById('nvNC_nombre').value='';
+      document.getElementById('nvNC_id').value='';
+      document.getElementById('nvNC_tel').value='';
+      document.getElementById('nvNC_email').value='';
+      document.getElementById('nvNC_ciudad').value='';
+      document.getElementById('nvNC_pais').value='';
+      document.getElementById('nvNC_err').textContent='';
+      setTimeout(function(){document.getElementById('nvNC_nombre').focus();},100);
+    };
+    window.nvCloseNuevoCliente=function(){
+      document.getElementById('nvNuevoClienteModal').style.display='none';
+    };
+    window.nvGuardarCliente=async function(){
+      var nm=(document.getElementById('nvNC_nombre').value||'').trim();
+      var idc=(document.getElementById('nvNC_id').value||'').trim();
+      var tel=(document.getElementById('nvNC_tel').value||'').trim();
+      var eml=(document.getElementById('nvNC_email').value||'').trim();
+      var ci=(document.getElementById('nvNC_ciudad').value||'').trim();
+      var pa=(document.getElementById('nvNC_pais').value||'').trim();
+      var errEl=document.getElementById('nvNC_err');
+      if(!nm){errEl.textContent='El nombre completo es obligatorio.';return;}
+      if(!idc){errEl.textContent='La identificación es obligatoria.';return;}
+      if(!ci){errEl.textContent='La ciudad es obligatoria.';return;}
+      if(!pa){errEl.textContent='El país es obligatorio.';return;}
+      errEl.textContent='';
+      var btn=document.getElementById('nvNC_btn');
+      btn.disabled=true;btn.textContent='Guardando...';
+      try{
+        var obj={nombre_completo:nm,identificacion:idc,ciudad:ci,pais:pa};
+        if(tel)obj.telefono=tel;
+        if(eml)obj.correo=eml;
+        var r=await _sb.from('clientes').insert(obj).select('id,nombre_completo,identificacion,ciudad,pais').single();
+        if(r.error){errEl.textContent='Error: '+(r.error.message||'No se pudo guardar.');btn.disabled=false;btn.textContent='Guardar';return;}
+        var c=r.data;
+        window._nvSelectedCliente={id:c.id,nombre_completo:c.nombre_completo,identificacion:c.identificacion,ciudad:c.ciudad,pais:c.pais};
+        var srch=document.getElementById('nDentSearch');
+        var hDent=document.getElementById('nDent');
+        var hId=document.getElementById('nClienteId');
+        _nvIgnoreNextInput=true;
+        if(srch)srch.value=c.nombre_completo;
+        if(hDent)hDent.value=c.nombre_completo;
+        if(hId)hId.value=c.id;
+        var cityEl=document.getElementById('nCity');
+        if(cityEl&&c.ciudad)cityEl.value=c.ciudad;
+        var countryEl=document.getElementById('nCountry');
+        if(countryEl&&c.pais){
+          var paLow=(c.pais||'').toLowerCase();
+          for(var i=0;i<countryEl.options.length;i++){
+            if(countryEl.options[i].text.toLowerCase()===paLow){countryEl.selectedIndex=i;break;}
+          }
+        }
+        nvCloseClienteDropdown();
+        nvCloseNuevoCliente();
+      }catch(e){errEl.textContent='Error inesperado: '+e.message;btn.disabled=false;btn.textContent='Guardar';}
+      finally{if(btn.disabled){btn.disabled=false;btn.textContent='Guardar';}}
+    };
 });;
 </script>
+<!-- MODAL NUEVO CLIENTE -->
+<div id="nvNuevoClienteModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.45);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:28px 32px;width:100%;max-width:460px;box-shadow:0 8px 32px rgba(0,0,0,.22);position:relative;">
+    <button onclick="nvCloseNuevoCliente()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#6b7280;" title="Cerrar">✕</button>
+    <h3 style="margin:0 0 20px;font-size:17px;color:#1e3a5f;font-weight:700;">Nuevo Cliente</h3>
+    <div style="display:flex;flex-direction:column;gap:13px;">
+      <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Nombre Completo <span style="color:#e53e3e;">*</span></label><input id="nvNC_nombre" class="fi" placeholder="Nombre completo" style="width:100%;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Identificación <span style="color:#e53e3e;">*</span></label><input id="nvNC_id" class="fi" placeholder="Cédula o NIT" style="width:100%;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Teléfono</label><input id="nvNC_tel" class="fi" placeholder="Opcional" style="width:100%;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Correo</label><input id="nvNC_email" class="fi" placeholder="Opcional" type="email" style="width:100%;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Ciudad <span style="color:#e53e3e;">*</span></label><input id="nvNC_ciudad" class="fi" placeholder="Ciudad" style="width:100%;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">País <span style="color:#e53e3e;">*</span></label><input id="nvNC_pais" class="fi" placeholder="País" style="width:100%;box-sizing:border-box;"></div>
+    </div>
+    <div id="nvNC_err" style="color:#e53e3e;font-size:12px;margin-top:10px;min-height:16px;"></div>
+    <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end;">
+      <button onclick="nvCloseNuevoCliente()" style="padding:8px 18px;border-radius:6px;border:1px solid #d1d5db;background:#f9fafb;color:#374151;font-size:13px;cursor:pointer;">Cancelar</button>
+      <button id="nvNC_btn" onclick="nvGuardarCliente()" style="padding:8px 22px;border-radius:6px;border:none;background:var(--acc);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">Guardar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
