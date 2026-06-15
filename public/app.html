@@ -1618,7 +1618,7 @@ body.role-contable button[onclick*="deleteOrder"]{display:none!important;}
     <div class="mb">
       <div class="frow">
         <div class="fg" style="max-width:180px;"><label class="flbl">ID Interno <span style="font-size:9px;color:var(--tx3);">(opcional)</span></label><input class="fi" id="nIntId" placeholder="Ej: 2024-089, REF-05..."></div>
-        <div class="fg"><label class="flbl req">Dentista / Clínica</label><input class="fi" id="nDent" placeholder="Dr. Nombre"></div>
+        <div class="fg" style="position:relative;"><label class="flbl req">Dentista / Clínica</label><input class="fi" id="nDentSearch" placeholder="Buscar por nombre o cédula..." oninput="nvSearchCliente(this.value)" onblur="setTimeout(nvCloseClienteDropdown,200)" autocomplete="off"><input type="hidden" id="nDent"><input type="hidden" id="nClienteId"><div id="nDentDrop" style="display:none;position:absolute;z-index:9999;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:180px;overflow-y:auto;width:100%;top:calc(100% + 2px);left:0;"></div></div>
         <div class="fg" style="display:grid;grid-template-columns:1fr 80px;gap:7px;">
           <div class="fg"><label class="flbl req">Paciente</label><input class="fi" id="nPat" placeholder="Apellido, Nombre"></div>
           <div class="fg"><label class="flbl">Edad</label><input class="fi" id="nAge" type="number" min="1" max="120" placeholder="—"></div>
@@ -4356,6 +4356,84 @@ window.addEventListener("DOMContentLoaded",function(){
     }
     document.getElementById('nv-login').classList.remove('hidden');
   });
+// ═══ CLIENTE SEARCH AUTOCOMPLETE ═══
+var _nvClienteTmr=null;
+window._nvSelectedCliente=null;
+window.nvSearchCliente=function(q){
+  clearTimeout(_nvClienteTmr);
+  var hDent=document.getElementById('nDent');
+  var hId=document.getElementById('nClienteId');
+  if(hDent)hDent.value='';
+  if(hId)hId.value='';
+  window._nvSelectedCliente=null;
+  if(!q||q.length<2){nvCloseClienteDropdown();return;}
+  _nvClienteTmr=setTimeout(async function(){
+    try{
+      var r=await _sb.from('clientes').select('id,nombre_completo,identificacion,ciudad,pais').or('nombre_completo.ilike.%'+q+'%,identificacion.ilike.%'+q+'%').limit(10);
+      nvShowClienteDropdown(r.data||[]);
+    }catch(e){console.error('nvSearchCliente:',e);}
+  },300);
+}
+window.nvShowClienteDropdown=function(items){
+  var drop=document.getElementById('nDentDrop');
+  if(!drop)return;
+  if(!items||!items.length){drop.style.display='none';return;}
+  drop.innerHTML=items.map(function(c){
+    var nm=(c.nombre_completo||'').replace(/'/g,'&#39;');
+    var idc=(c.identificacion||'').replace(/'/g,'&#39;');
+    var ci=(c.ciudad||'').replace(/'/g,'&#39;');
+    var pa=(c.pais||'').replace(/'/g,'&#39;');
+    var uid=c.id;
+    return '<div data-uid="'+uid+'" data-nm="'+nm+'" data-idc="'+idc+'" data-ci="'+ci+'" data-pa="'+pa+'" onclick="nvSelectCliente(this)" style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;">'
+    +'<div style="font-weight:600;color:#1e3a5f;">'+nm+'</div>'
+    +'<div style="color:#6b7280;font-size:11px;">ID: '+idc+(ci?' · '+ci:'')+'</div></div>';
+  }).join('');
+  drop.style.display='block';
+}
+window.nvSelectCliente=function(el){
+  var nm=el.getAttribute('data-nm')||'';
+  var idc=el.getAttribute('data-idc')||'';
+  var ci=el.getAttribute('data-ci')||'';
+  var pa=el.getAttribute('data-pa')||'';
+  var uid=el.getAttribute('data-uid')||'';
+  window._nvSelectedCliente={id:uid,nombre_completo:nm,identificacion:idc,ciudad:ci,pais:pa};
+  var srch=document.getElementById('nDentSearch');
+  var hDent=document.getElementById('nDent');
+  var hId=document.getElementById('nClienteId');
+  if(srch)srch.value=nm;
+  if(hDent)hDent.value=nm;
+  if(hId)hId.value=uid;
+  var cityEl=document.getElementById('nCity');
+  if(cityEl&&ci)cityEl.value=ci;
+  var countryEl=document.getElementById('nCountry');
+  if(countryEl&&pa){
+    var paLow=pa.toLowerCase();
+    for(var i=0;i<countryEl.options.length;i++){
+      if(countryEl.options[i].text.toLowerCase()===paLow){countryEl.selectedIndex=i;break;}
+    }
+  }
+  nvCloseClienteDropdown();
+}
+window.nvCloseClienteDropdown=function(){
+  var d=document.getElementById('nDentDrop');
+  if(d)d.style.display='none';
+}
+(function(){
+  var _origOpenNew=window.openNew;
+  window.openNew=function(){
+    if(_origOpenNew)_origOpenNew.apply(this,arguments);
+    setTimeout(function(){
+      var s=document.getElementById('nDentSearch');
+      if(s)s.value='';
+      var h=document.getElementById('nDent');
+      if(h)h.value='';
+      var hId=document.getElementById('nClienteId');
+      if(hId)hId.value='';
+      nvCloseClienteDropdown();
+      window._nvSelectedCliente=null;
+    },50);
+  };
+})();
 });;
 </script>
 </body>
