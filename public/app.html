@@ -13,6 +13,7 @@
 <title>Natural Veneers — DentaLab OS</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* ══ PREMIUM DARK THEME — Natural Veneers OS ══ */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -914,12 +915,95 @@ html.light .cc:hover{background:#fff;}
   .rgrid{grid-template-columns:repeat(2,1fr);}
   .price-grid{grid-template-columns:1fr;}
 }
+
+/* ===== INFORMES MODULE ===== */
+.rpt-sec{display:none}
+.rpt-sec.on{display:block}
+/* ═══ LOGIN PREMIUM ═══ */
+#nv-login{position:fixed;inset:0;z-index:99999;display:flex;background:#060b12;font-family:inherit;}
+#nv-login.hidden{display:none!important;}
+.nv-li{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 40%,rgba(14,165,233,0.1) 0%,transparent 60%),radial-gradient(ellipse at 75% 70%,rgba(99,102,241,0.08) 0%,transparent 50%),linear-gradient(160deg,#060b12 0%,#080f1a 100%);}
+.nv-li::before{content:"";position:absolute;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(14,165,233,0.13),transparent 70%);top:15%;left:15%;animation:nvGlow 5s ease-in-out infinite alternate;}
+.nv-li::after{content:"";position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,0.1),transparent 70%);bottom:20%;right:20%;animation:nvGlow 7s ease-in-out infinite alternate-reverse;}
+@keyframes nvGlow{0%{opacity:0.4;transform:scale(1);}100%{opacity:1;transform:scale(1.2);}}
+.nv-li-inner{position:relative;z-index:1;text-align:center;padding:40px;}
+.nv-li-logo{width:88px;height:88px;margin:0 auto 28px;filter:drop-shadow(0 0 18px rgba(14,165,233,0.4));}
+.nv-li-brand{font-size:1.7rem;font-weight:800;color:#f1f5f9;letter-spacing:0.04em;margin-bottom:6px;}
+.nv-li-brand-sub{font-size:0.78rem;color:#475569;letter-spacing:0.14em;text-transform:uppercase;}
+.nv-li-tagline{margin-top:36px;font-size:0.82rem;color:#2d4a66;max-width:280px;line-height:1.7;margin-left:auto;margin-right:auto;}
+.nv-lf{width:440px;min-width:380px;display:flex;flex-direction:column;justify-content:center;padding:64px 52px;background:#080e18;border-left:1px solid #0f1e31;}
+.nv-lf h2{font-size:1.85rem;font-weight:700;color:#f1f5f9;margin:0 0 6px;}
+.nv-lf-sub{font-size:0.84rem;color:#3d5a78;margin-bottom:32px;}
+.nv-lf-field{margin-bottom:18px;}
+.nv-lf-field label{display:block;font-size:0.71rem;font-weight:600;color:#4a6a8a;margin-bottom:7px;letter-spacing:0.09em;text-transform:uppercase;}
+.nv-lf-field input{width:100%;background:#0c1825;border:1px solid #162740;border-radius:8px;padding:11px 14px;color:#e2e8f0;font-size:0.9rem;outline:none;transition:border-color .2s,box-shadow .2s;box-sizing:border-box;font-family:inherit;}
+.nv-lf-field input:focus{border-color:#0ea5e9;box-shadow:0 0 0 3px rgba(14,165,233,0.12);}
+.nv-lf-field input::placeholder{color:#243a52;}
+.nv-lf-opts{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;font-size:0.8rem;}
+.nv-lf-remember{display:flex;align-items:center;gap:7px;color:#4a6a8a;cursor:pointer;user-select:none;}
+.nv-lf-remember input[type=checkbox]{width:14px;height:14px;accent-color:#0ea5e9;cursor:pointer;}
+.nv-lf-forgot{color:#0ea5e9;cursor:pointer;font-size:0.8rem;background:none;border:none;padding:0;font-family:inherit;}
+.nv-lf-forgot:hover{color:#38bdf8;text-decoration:underline;}
+.nv-lf-btn{width:100%;padding:12px;background:linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%);border:none;border-radius:8px;color:#fff;font-size:0.92rem;font-weight:600;cursor:pointer;letter-spacing:0.03em;transition:opacity .15s,transform .1s;font-family:inherit;}
+.nv-lf-btn:hover{opacity:0.87;}
+.nv-lf-btn:active{transform:scale(0.99);}
+.nv-lf-err{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.22);border-radius:6px;padding:9px 13px;color:#fca5a5;font-size:0.8rem;margin-bottom:14px;display:none;}
+.nv-lf-err.on{display:block;}
+.nv-lf-foot{margin-top:36px;font-size:0.71rem;color:#1a2f42;text-align:center;}
+#loginScreen{display:none!important;}
+/* ═══ PERMISOS POR ROL ═══ */
+body.role-auxiliar #mt-pr,body.role-auxiliar #mt-da,body.role-auxiliar #mt-cfg,
+body.role-contable #mt-pr,body.role-contable #mt-da,body.role-contable #mt-cfg{display:none!important;}
+body.role-gerencia #mt-fi,body.role-gerencia #mt-da,body.role-gerencia #mt-rp,body.role-gerencia #mt-cfg{display:none!important;}
+body.role-gerencia button[onclick*="openNew"],body.role-gerencia button[onclick*="createCase"],
+body.role-gerencia button[onclick*="addItem"],body.role-gerencia button[onclick*="savePayment"],
+body.role-gerencia button[onclick*="confirmInvoice"],body.role-gerencia button[onclick*="saveNewUser"],
+body.role-gerencia button[onclick*="openAddUserModal"],body.role-gerencia .cc-btn{display:none!important;}
+body.role-auxiliar button[onclick*="deleteCase"],body.role-auxiliar button[onclick*="deleteUser"],
+body.role-auxiliar button[onclick*="deleteOrder"],
+body.role-contable button[onclick*="deleteCase"],body.role-contable button[onclick*="deleteUser"],
+body.role-contable button[onclick*="deleteOrder"]{display:none!important;}
+.nv-cli-item:hover{background:#eff6ff !important;}
 </style>
 </head>
 <body>
 
 <!-- ═══════════════ HEADER ═══════════════ -->
 <!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
+<div id="nv-login">
+  <div class="nv-li">
+    <div class="nv-li-inner">
+      <svg class="nv-li-logo" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M40 6L72 22V58L40 74L8 58V22L40 6Z" stroke="#0ea5e9" stroke-width="1.5" fill="rgba(14,165,233,0.07)"/>
+        <path d="M40 18L62 28V52L40 62L18 52V28L40 18Z" fill="rgba(14,165,233,0.12)" stroke="#38bdf8" stroke-width="1"/>
+        <circle cx="40" cy="40" r="8" fill="rgba(14,165,233,0.3)" stroke="#0ea5e9" stroke-width="1.5"/>
+        <circle cx="40" cy="40" r="3" fill="#0ea5e9"/>
+      </svg>
+      <div class="nv-li-brand">Natural Veneers</div>
+      <div class="nv-li-brand-sub">Dental Lab OS</div>
+      <div class="nv-li-tagline">Sistema integrado de gestión para laboratorio dental de alto estándar</div>
+    </div>
+  </div>
+  <div class="nv-lf">
+    <h2>Bienvenido</h2>
+    <p class="nv-lf-sub">Ingresa tus credenciales para acceder al sistema</p>
+    <div class="nv-lf-err" id="nv-lerr">Correo o contraseña incorrectos</div>
+    <div class="nv-lf-field">
+      <label>Correo electrónico</label>
+      <input type="email" id="nv-email" placeholder="correo@ejemplo.com" autocomplete="email" onkeydown="if(event.key==='Enter')nvLogin()">
+    </div>
+    <div class="nv-lf-field">
+      <label>Contraseña</label>
+      <input type="password" id="nv-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')nvLogin()">
+    </div>
+    <div class="nv-lf-opts">
+      <label class="nv-lf-remember"><input type="checkbox" id="nv-rem"> Recordar sesión</label>
+      <button class="nv-lf-forgot" onclick="nvForgot()">¿Olvidaste tu contraseña?</button>
+    </div>
+    <button class="nv-lf-btn" onclick="nvLogin()">Iniciar sesión</button>
+    <div class="nv-lf-foot">Natural Veneers © 2026 · Sistema ERP Interno</div>
+  </div>
+</div>
 
 
 <!-- ═══ STAGE MOVE MODAL ═══ -->
@@ -1066,6 +1150,7 @@ html.light .cc:hover{background:#fff;}
   <div class="mtab" style="--tab-c:#10b981" id="mt-fi" onclick="switchMain('fi')"><span class="mic">💰</span>Finanzas</div>
   <div class="mtab" style="--tab-c:#8b5cf6" id="mt-pr" onclick="switchMain('pr')"><span class="mic">📊</span>Productividad</div>
   <div class="mtab" style="--tab-c:#f59e0b" id="mt-da" onclick="switchMain('da')"><span class="mic">🗂</span>Dashboard</div>
+  <div class="mtab" style="--tab-c:#0ea5e9" id="mt-rp" onclick="document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.msec').forEach(s=>s.classList.remove('on'));this.classList.add('on');document.getElementById('sec-rp').classList.add('on');onRptPanelOpen()"><span class="mic">📈</span>Informes</div>
   <div class="mtab" style="--tab-c:#64748b" id="mt-cfg" onclick="switchMain('cfg')"><span class="mic">⚙</span>Configuración</div>
 </div>
 
@@ -1174,6 +1259,7 @@ html.light .cc:hover{background:#fff;}
         <div style="flex:1;"></div>
         <div id="histStats" style="font-size:11px;color:var(--tx2);"></div>
       </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;"><span style="font-size:13px;color:var(--txt2);">Historial completo guardado en base de datos</span><button onclick="nvExportCasosExcel()" style="padding:8px 18px;border-radius:6px;background:#16a34a;border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;"><span>⬇</span><span>Exportar Excel</span></button></div>
       <div id="histList"></div>
     </div>
   </div>
@@ -1401,6 +1487,98 @@ html.light .cc:hover{background:#fff;}
   </div>
 </div>
 
+
+<!-- ═══════════════ SECTION: INFORMES ═══════════════ -->
+<div class="msec" id="sec-rp">
+  <div class="snav">
+    <div class="stab on" id="rt-emp" onclick="switchRptSub('emp')">👤 Por Empleado</div>
+    <div class="stab" id="rt-area" onclick="switchRptSub('area')">🏭 Por Área</div>
+    <div class="stab" id="rt-warr" onclick="switchRptSub('warr')">🔁 Repeticiones y Garantías</div>
+    <div class="stab" id="rt-sales" onclick="switchRptSub('sales')">💵 Ventas por Cliente</div>
+  </div>
+
+  <!-- INFORME POR EMPLEADO -->
+  <div class="rpt-sec on" id="rs-emp">
+    <div style="padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid var(--bdr)">
+      <div class="fg"><div class="flbl">Desde</div><input class="fi" type="date" id="rp-emp-from"></div>
+      <div class="fg"><div class="flbl">Hasta</div><input class="fi" type="date" id="rp-emp-to"></div>
+      <div class="fg"><div class="flbl">Empleado</div><select class="fs" id="rp-emp-user"><option value="">Todos</option></select></div>
+      <div class="fg"><div class="flbl">Tipo de Producto</div><select class="fs" id="rp-emp-prod"><option value="">Todos</option></select></div>
+      <button class="btn btn-p" onclick="renderRptEmp()">🔍 Filtrar</button>
+      <button class="btn btn-g" onclick="exportRptExcel('emp')">⬇ Excel</button>
+    </div>
+    <div style="padding:14px 20px 20px">
+      <table class="tbl" id="tbl-rpt-emp">
+        <thead><tr><th>Caso</th><th>Empleado</th><th>Rol</th><th>Doctor</th><th>Paciente</th><th>Producto</th><th>Unidades</th><th>Fecha</th><th>Repetición</th></tr></thead>
+        <tbody><tr><td colspan="9" style="text-align:center;padding:30px;color:var(--tx3)">Aplica los filtros y haz clic en Filtrar</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- INFORME POR ÁREA -->
+  <div class="rpt-sec" id="rs-area">
+    <div style="padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid var(--bdr)">
+      <div class="fg"><div class="flbl">Desde</div><input class="fi" type="date" id="rp-area-from"></div>
+      <div class="fg"><div class="flbl">Hasta</div><input class="fi" type="date" id="rp-area-to"></div>
+      <div class="fg"><div class="flbl">Área</div>
+        <select class="fs" id="rp-area-dept">
+          <option value="">Todas</option>
+          <option>ADMINISTRACIÓN</option><option>DESPACHO</option>
+          <option>DIGITAL</option><option>IMPRESIÓN E INYECCIÓN</option><option>CERÁMICA</option>
+        </select>
+      </div>
+      <button class="btn btn-p" onclick="renderRptArea()">🔍 Filtrar</button>
+      <button class="btn btn-g" onclick="exportRptExcel('area')">⬇ Excel</button>
+    </div>
+    <div style="padding:14px 20px 20px">
+      <table class="tbl" id="tbl-rpt-area">
+        <thead><tr><th>Caso</th><th>Área</th><th>Doctor</th><th>Paciente</th><th>Unidades</th><th>Descripción</th><th>Fecha</th><th>Repetición</th></tr></thead>
+        <tbody><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--tx3)">Aplica los filtros y haz clic en Filtrar</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPETICIONES Y GARANTÍAS -->
+  <div class="rpt-sec" id="rs-warr">
+    <div style="padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid var(--bdr)">
+      <div class="fg"><div class="flbl">Desde</div><input class="fi" type="date" id="rp-warr-from"></div>
+      <div class="fg"><div class="flbl">Hasta</div><input class="fi" type="date" id="rp-warr-to"></div>
+      <button class="btn btn-p" onclick="renderRptWarr()">🔍 Filtrar</button>
+      <button class="btn btn-g" onclick="exportRptExcel('warr')">⬇ Excel</button>
+    </div>
+    <div style="padding:14px 20px 20px">
+      <table class="tbl" id="tbl-rpt-warr">
+        <thead><tr><th>Caso</th><th>Caso Original</th><th>Doctor</th><th>Paciente</th><th>Unidades</th><th>Descripción</th><th>Motivo</th><th>Diseño</th><th>Cerámica</th><th>Envío</th></tr></thead>
+        <tbody><tr><td colspan="10" style="text-align:center;padding:30px;color:var(--tx3)">Aplica los filtros y haz clic en Filtrar</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VENTAS POR CLIENTE -->
+  <div class="rpt-sec" id="rs-sales">
+    <div style="padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid var(--bdr)">
+      <div class="fg"><div class="flbl">Desde</div><input class="fi" type="date" id="rp-sales-from"></div>
+      <div class="fg"><div class="flbl">Hasta</div><input class="fi" type="date" id="rp-sales-to"></div>
+      <div class="fg"><div class="flbl">Doctor / Cliente</div><input class="fi" type="text" id="rp-sales-dr" placeholder="Buscar..."></div>
+      <div class="fg" style="min-width:160px"><label class="flbl">💱 TRM USD/COP</label><input class="fi" id="rp-sales-trm" type="number" value="4200" min="1" step="10" placeholder="4200" oninput="renderRptSales()" style="width:100%"></div><button class="btn btn-p" onclick="renderRptSales()">🔍 Filtrar</button>
+      <button class="btn btn-g" onclick="exportRptExcel('sales')">⬇ Excel</button>
+    </div>
+    <div class="krow">
+      <div class="kcard gn"><div class="klbl">Facturación Bruta</div><div class="kval" id="rk-bruto">—</div></div>
+      <div class="kcard rd"><div class="klbl">Total Descuentos</div><div class="kval" id="rk-desc">—</div></div>
+      <div class="kcard bl"><div class="klbl">Total Neto COP</div><div class="kval" id="rk-neto">—</div></div>
+      <div class="kcard pu"><div class="klbl">Número de Casos</div><div class="kval" id="rk-casos">—</div></div>
+    </div>
+    <div style="padding:0 20px 20px">
+      <table class="tbl" id="tbl-rpt-sales">
+        <thead><tr><th>Caso</th><th>Doctor</th><th>Fecha</th><th style="text-align:right">Fact. Bruta</th><th style="text-align:right">Descuentos</th><th style="text-align:right">Total COP</th></tr></thead>
+        <tbody><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--tx3)">Aplica los filtros y haz clic en Filtrar</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
 <!-- ═══════════════ SECTION: CONFIGURACIÓN ═══════════════ -->
 <div class="msec" id="sec-cfg">
   <div class="snav">
@@ -1442,7 +1620,7 @@ html.light .cc:hover{background:#fff;}
     <div class="mb">
       <div class="frow">
         <div class="fg" style="max-width:180px;"><label class="flbl">ID Interno <span style="font-size:9px;color:var(--tx3);">(opcional)</span></label><input class="fi" id="nIntId" placeholder="Ej: 2024-089, REF-05..."></div>
-        <div class="fg"><label class="flbl req">Dentista / Clínica</label><input class="fi" id="nDent" placeholder="Dr. Nombre"></div>
+        <div class="fg" style="position:relative;"><label class="flbl req">Dentista / Clínica</label><div style="display:flex;gap:6px;align-items:flex-start;"><div style="position:relative;flex:1;"><input class="fi" id="nDentSearch" placeholder="Buscar por nombre o cédula..." oninput="nvSearchCliente(this.value)" onblur="setTimeout(nvCloseClienteDropdown,200)" autocomplete="off"><input type="hidden" id="nDent"><input type="hidden" id="nClienteId"><div id="nDentDrop" style="display:none;position:absolute;z-index:9999;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:180px;overflow-y:auto;width:100%;top:calc(100% + 2px);left:0;"></div></div><button type="button" onclick="nvOpenNuevoCliente()" title="Crear nuevo cliente" style="flex-shrink:0;height:36px;padding:0 10px;border-radius:6px;background:var(--acc);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">+ Nuevo</button></div></div>
         <div class="fg" style="display:grid;grid-template-columns:1fr 80px;gap:7px;">
           <div class="fg"><label class="flbl req">Paciente</label><input class="fi" id="nPat" placeholder="Apellido, Nombre"></div>
           <div class="fg"><label class="flbl">Edad</label><input class="fi" id="nAge" type="number" min="1" max="120" placeholder="—"></div>
@@ -1732,7 +1910,7 @@ const EMP_BY_STAGE={
   digital:['Yeiner','César'],
   printing:['Yeiner','César','Eliecer','Karolay'],
   injection:['Eliecer','Yeiner','César','Karolay'],
-  ceramic:['Alexander','Eidy','Yesid','Karolay'],
+  ceramic:['Alexander','Keidy','Yesid','Karolay'],
   qc:ALL_EMPS,
   dispatch:['Sheyla','Mabridis'],
 };
@@ -1982,7 +2160,7 @@ function load(){
   }catch(e){orders=JSON.parse(JSON.stringify(SAMPLE)).map(migrate);}
   try{const p=localStorage.getItem('nv_prices');if(p)customPrices=JSON.parse(p);}catch(e){}
 }
-function save(){localStorage.setItem('nv_v6',JSON.stringify({orders,counter,cur,invCounter}));}
+function save(){localStorage.setItem('nv_v6',JSON.stringify({orders,counter,cur,invCounter}));if(typeof nvSyncCasosSupabase==='function')nvSyncCasosSupabase();}
 function savePrices(){localStorage.setItem('nv_prices',JSON.stringify(customPrices));}
 
 
@@ -3582,7 +3760,7 @@ async function initAuth(){
       {email:'eliecer@naturalveneers.com',name:'Eliecer',role:'asistente',department:'IMPRESIÓN E INYECCIÓN',departments:['IMPRESIÓN E INYECCIÓN'],passwordHash:await hashPw(pw),permissions:{...DEFAULT_ASISTENTE_PERMS}},
       {email:'karolay@naturalveneers.com',name:'Karolay',role:'asistente',department:'IMPRESIÓN E INYECCIÓN',departments:['IMPRESIÓN E INYECCIÓN','CERÁMICA'],passwordHash:await hashPw(pw),permissions:{...DEFAULT_ASISTENTE_PERMS}},
       {email:'alexander@naturalveneers.com',name:'Alexander',role:'asistente',department:'CERÁMICA',departments:['CERÁMICA'],passwordHash:await hashPw(pw),permissions:{...DEFAULT_ASISTENTE_PERMS}},
-      {email:'eidy@naturalveneers.com',name:'Eidy',role:'asistente',department:'CERÁMICA',departments:['CERÁMICA'],passwordHash:await hashPw(pw),permissions:{...DEFAULT_ASISTENTE_PERMS}},
+      {email:'eidy@naturalveneers.com',name:'Keidy',role:'asistente',department:'CERÁMICA',departments:['CERÁMICA'],passwordHash:await hashPw(pw),permissions:{...DEFAULT_ASISTENTE_PERMS}},
       {email:'yesid@naturalveneers.com',name:'Yesid',role:'asistente',department:'CERÁMICA',departments:['CERÁMICA'],passwordHash:await hashPw(pw),permissions:{...DEFAULT_ASISTENTE_PERMS}},
     ];
     localStorage.setItem('nv_users',JSON.stringify(users));
@@ -3967,6 +4145,469 @@ function checkDelayNotifications(){
 
 // ════ INIT AUTH (must be last — all consts must be initialized first) ════
 initAuth().then(()=>checkSession());
+
+/* ======================== INFORMES MODULE ======================== */
+// === MIGRACIÓN: Keidy + Martin ===
+(function(){try{var u=JSON.parse(localStorage.getItem('nv_users')||'[]');var dirty=false;u.forEach(function(x){if(x.name==='Keidy'){x.name='Keidy';dirty=true;}});if(!u.some(function(x){return x.name==='Martin';})){var tpl=u.find(function(x){return x.role==='asistente';})||{role:'asistente',department:'general'};var m=Object.assign({},tpl,{name:'Martin'});u.push(m);dirty=true;}if(dirty)localStorage.setItem('nv_users',JSON.stringify(u));}catch(e){}})();
+function switchRptSub(k){
+  document.querySelectorAll('#sec-rp .stab').forEach(function(t){t.classList.remove('on');});
+  document.querySelectorAll('.rpt-sec').forEach(function(s){s.classList.remove('on');});
+  var t=document.getElementById('rt-'+k),s=document.getElementById('rs-'+k);
+  if(t)t.classList.add('on');if(s)s.classList.add('on');
+}
+function _rptOrders(){try{return(JSON.parse(localStorage.getItem('nv_v6'))||{}).orders||[];}catch(e){return[];}}
+function _rptUsers(){try{return JSON.parse(localStorage.getItem('nv_users'))||[];}catch(e){return[];}}
+function _inRange(d,f,t){if(!d)return true;var x=d.substring(0,10);if(f&&x<f)return false;if(t&&x>t)return false;return true;}
+function fmtCOPRpt(n){return 'COP '+Math.round(n||0).toLocaleString('es-CO');}
+function onRptPanelOpen(){_initRptEmpSelects();renderRptEmp();}
+function _initRptEmpSelects(){
+  var us=_rptUsers(),os=_rptOrders(),ps=[];
+  os.forEach(function(o){(o.items||[]).forEach(function(i){if(ps.indexOf(i.product)<0)ps.push(i.product);});});
+  var uSel=document.getElementById('rp-emp-user');
+  if(uSel&&uSel.options.length<=1){us.forEach(function(u){var o=document.createElement('option');o.value=u.name;o.textContent=u.name;uSel.appendChild(o);});}
+  var pSel=document.getElementById('rp-emp-prod');
+  if(pSel&&pSel.options.length<=1){ps.sort().forEach(function(p){var o=document.createElement('option');o.value=p;o.textContent=p;pSel.appendChild(o);});}
+}
+function renderRptEmp(){
+  var from=document.getElementById('rp-emp-from').value,to=document.getElementById('rp-emp-to').value;
+  var user=document.getElementById('rp-emp-user').value,prod=document.getElementById('rp-emp-prod').value;
+  var orders=_rptOrders(),ROLES={received:'Recepción',digital:'Digital/CAD',printing:'Impresión/Fresado',injection:'Inyección',ceramic:'Cerámica'};
+  var rows=[],seen={};
+  orders.forEach(function(o){
+    if(!_inRange(o.createdAt,from,to))return;
+    (o.items||[]).forEach(function(item){
+      if(prod&&item.product!==prod)return;
+      Object.keys(o.responsibles||{}).forEach(function(role){
+        var nm=o.responsibles[role];if(!nm)return;if(user&&nm!==user)return;
+        var k=o.id+'|'+nm+'|'+item.product+'|'+role;if(seen[k])return;seen[k]=1;
+        rows.push({caso:o.id,empleado:nm,rol:ROLES[role]||role,doctor:o.dentist,paciente:o.patient,producto:item.product,unidades:item.units,fecha:(o.createdAt||'').substring(0,10),rep:o.isWarranty?'Repeticion':'No'});
+      });
+    });
+  });
+  var tb=document.querySelector('#tbl-rpt-emp tbody');
+  tb.innerHTML=rows.length?rows.map(function(r){return '<tr><td class="mono">'+r.caso+'</td><td>'+r.empleado+'</td><td>'+r.rol+'</td><td>'+r.doctor+'</td><td>'+r.paciente+'</td><td>'+r.producto+'</td><td style="text-align:center">'+r.unidades+'</td><td>'+r.fecha+'</td><td style="text-align:center;'+(r.rep!=='No'?'color:#ef4444;font-weight:600':'')+'">'+r.rep+'</td></tr>';}).join(''):'<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--tx3)">Sin resultados para el filtro aplicado</td></tr>';
+  window._rptEmpData=rows;
+}
+function renderRptArea(){
+  var from=document.getElementById('rp-area-from').value,to=document.getElementById('rp-area-to').value,dept=document.getElementById('rp-area-dept').value;
+  var orders=_rptOrders(),RD={received:['ADMINISTRACION','DESPACHO'],digital:['DIGITAL'],printing:['IMPRESION E INYECCION'],injection:['IMPRESION E INYECCION'],ceramic:['CERAMICA']};
+  var RDfull={received:['ADMINISTRACIÓN','DESPACHO'],digital:['DIGITAL'],printing:['IMPRESIÓN E INYECCIÓN'],injection:['IMPRESIÓN E INYECCIÓN'],ceramic:['CERÁMICA']};
+  var rows=[],seen={};
+  orders.forEach(function(o){
+    if(!_inRange(o.createdAt,from,to))return;
+    var desc=(o.items||[]).map(function(i){return i.units+'x '+i.product;}).join(', ');
+    var tu=(o.items||[]).reduce(function(s,i){return s+(i.units||0);},0);
+    Object.keys(o.responsibles||{}).forEach(function(role){
+      (RDfull[role]||[]).forEach(function(area){
+        if(dept&&area!==dept)return;
+        var k=o.id+'|'+area;if(seen[k])return;seen[k]=1;
+        rows.push({caso:o.id,area:area,doctor:o.dentist,paciente:o.patient,unidades:tu,descripcion:desc,fecha:(o.createdAt||'').substring(0,10),rep:o.isWarranty?'Repeticion':'No'});
+      });
+    });
+  });
+  var tb=document.querySelector('#tbl-rpt-area tbody');
+  tb.innerHTML=rows.length?rows.map(function(r){return '<tr><td class="mono">'+r.caso+'</td><td><span style="background:rgba(99,102,241,.15);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">'+r.area+'</span></td><td>'+r.doctor+'</td><td>'+r.paciente+'</td><td style="text-align:center">'+r.unidades+'</td><td style="font-size:12px">'+r.descripcion+'</td><td>'+r.fecha+'</td><td style="text-align:center;'+(r.rep!=='No'?'color:#ef4444;font-weight:600':'')+'">'+r.rep+'</td></tr>';}).join(''):'<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--tx3)">Sin resultados</td></tr>';
+  window._rptAreaData=rows;
+}
+function renderRptWarr(){
+  var from=document.getElementById('rp-warr-from').value,to=document.getElementById('rp-warr-to').value;
+  var rows=_rptOrders().filter(function(o){return o.isWarranty;}).filter(function(o){return _inRange(o.createdAt,from,to);}).map(function(o){
+    return{caso:o.id,original:o.originalCaseId||'N/A',doctor:o.dentist,paciente:o.patient,
+      unidades:(o.items||[]).reduce(function(s,i){return s+(i.units||0);},0),
+      descripcion:(o.items||[]).map(function(i){return i.units+'x '+i.product;}).join(', '),
+      motivo:o.warrantyReason||'Sin especificar',
+      disenio:(o.responsibles&&o.responsibles.digital)||'N/A',
+      ceramica:(o.responsibles&&o.responsibles.ceramic)||'N/A',
+      envio:(o.responsibles&&o.responsibles.received)||'N/A'};
+  });
+  var tb=document.querySelector('#tbl-rpt-warr tbody');
+  tb.innerHTML=rows.length?rows.map(function(r){return '<tr><td class="mono">'+r.caso+'</td><td class="mono" style="color:#f59e0b">'+r.original+'</td><td>'+r.doctor+'</td><td>'+r.paciente+'</td><td style="text-align:center">'+r.unidades+'</td><td style="font-size:12px">'+r.descripcion+'</td><td style="color:#ef4444">'+r.motivo+'</td><td>'+r.disenio+'</td><td>'+r.ceramica+'</td><td>'+r.envio+'</td></tr>';}).join(''):'<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--tx3)">Sin repeticiones en el período seleccionado</td></tr>';
+  window._rptWarrData=rows;
+}
+function renderRptSales(){
+  var from=document.getElementById('rp-sales-from').value,to=document.getElementById('rp-sales-to').value;
+  var dr=(document.getElementById('rp-sales-dr').value||'').toLowerCase().trim();
+  var rows=[],tB=0,tD=0,tN=0;
+  _rptOrders().forEach(function(o){
+    if(!_inRange(o.createdAt,from,to))return;
+    if(dr&&!(o.dentist||'').toLowerCase().includes(dr))return;
+    var trm=parseFloat((document.getElementById('rp-sales-trm')||{}).value)||4200;var b=0,d=0;
+    (o.items||[]).forEach(function(i){var g=(i.unitPrice||0)*(i.units||0)*(o.currency==='USD'?trm:1);var dc=i.discountType==='%'?g*(i.discount||0)/100:(i.discount||0)*(i.units||0);b+=g;d+=dc;});
+    tB+=b;tD+=d;tN+=b-d;
+    rows.push({caso:o.id,doctor:o.dentist,fecha:(o.createdAt||'').substring(0,10),bruto:b,desc:d,neto:b-d});
+  });
+  document.getElementById('rk-bruto').textContent=fmtCOPRpt(tB);
+  document.getElementById('rk-desc').textContent=fmtCOPRpt(tD);
+  document.getElementById('rk-neto').textContent=fmtCOPRpt(tN);
+  document.getElementById('rk-casos').textContent=rows.length;
+  var tb=document.querySelector('#tbl-rpt-sales tbody');
+  tb.innerHTML=rows.length?rows.map(function(r){return '<tr><td class="mono">'+r.caso+'</td><td>'+r.doctor+'</td><td>'+r.fecha+'</td><td style="text-align:right">'+fmtCOPRpt(r.bruto)+'</td><td style="text-align:right;color:#ef4444">'+fmtCOPRpt(r.desc)+'</td><td style="text-align:right;font-weight:600;color:#10b981">'+fmtCOPRpt(r.neto)+'</td></tr>';}).join(''):'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--tx3)">Sin resultados</td></tr>';
+  window._rptSalesData=rows;
+}
+function exportRptExcel(type){
+  if(typeof XLSX==='undefined'){alert('XLSX no disponible');return;}
+  var data=[],fn='informe.xlsx';
+  if(type==='emp'){data=(window._rptEmpData||[]).map(function(r){return{'Caso':r.caso,'Empleado':r.empleado,'Rol':r.rol,'Doctor':r.doctor,'Paciente':r.paciente,'Producto':r.producto,'Unidades':r.unidades,'Fecha':r.fecha,'Repeticion':r.rep};});fn='informe_empleado.xlsx';}
+  else if(type==='area'){data=(window._rptAreaData||[]).map(function(r){return{'Caso':r.caso,'Area':r.area,'Doctor':r.doctor,'Paciente':r.paciente,'Unidades':r.unidades,'Descripcion':r.descripcion,'Fecha':r.fecha,'Repeticion':r.rep};});fn='informe_area.xlsx';}
+  else if(type==='warr'){data=(window._rptWarrData||[]).map(function(r){return{'Caso':r.caso,'Caso Original':r.original,'Doctor':r.doctor,'Paciente':r.paciente,'Unidades':r.unidades,'Descripcion':r.descripcion,'Motivo':r.motivo,'Disenio':r.disenio,'Ceramica':r.ceramica,'Envio':r.envio};});fn='repeticiones_garantias.xlsx';}
+  else if(type==='sales'){data=(window._rptSalesData||[]).map(function(r){return{'Caso':r.caso,'Doctor':r.doctor,'Fecha':r.fecha,'Facturacion Bruta COP':r.bruto,'Descuentos COP':r.desc,'Total Neto COP':r.neto};});fn='ventas_por_cliente.xlsx';}
+  if(!data.length){alert('Sin datos. Aplica el filtro primero.');return;}
+  var ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Informe');
+  XLSX.writeFile(wb,fn);
+}
+/* ======================== END INFORMES MODULE ======================== */
+
+
+// ═══ SUPABASE AUTH + SYNC ═══
+var _SB_URL='https://vptsppofvgatadwvtnsj.supabase.co';
+var _SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwdHNwcG9mdmdhdGFkd3Z0bnNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNjA5MTQsImV4cCI6MjA5NjczNjkxNH0.c_1UsCujfzy50a2mcN4UiI-7rAYoOdH9005ntye5qnw';
+var _sb=window.supabase?window.supabase.createClient(_SB_URL,_SB_KEY):null;
+var NV_ROLE_CFG={
+  admin:{tabs:['mt-op','mt-fi','mt-pr','mt-da','mt-rp','mt-cfg'],canDelete:true,readOnly:false},
+  auxiliar:{tabs:['mt-op','mt-fi','mt-rp'],canDelete:false,readOnly:false},
+  contable:{tabs:['mt-op','mt-fi','mt-rp'],canDelete:false,readOnly:false},
+  gerencia:{tabs:['mt-op','mt-pr'],canDelete:false,readOnly:true}
+};
+function nvLogin(){
+  var email=(document.getElementById('nv-email').value||'').trim().toLowerCase();
+  var pass=document.getElementById('nv-pass').value||'';
+  var rem=document.getElementById('nv-rem').checked;
+  var err=document.getElementById('nv-lerr');
+  err.classList.remove('on');
+  if(!email||!pass){err.textContent='Completa todos los campos.';err.classList.add('on');return;}
+  if(!_sb){err.textContent='Error de conexion. Intenta recargar.';err.classList.add('on');return;}
+  _sb.auth.signInWithPassword({email:email,password:pass}).then(function(res){
+    if(res.error){err.textContent='Correo o contrasena incorrectos.';err.classList.add('on');return;}
+    var meta=res.data.user.user_metadata||{};
+    var rol=meta.rol||'auxiliar';
+    var cfg=NV_ROLE_CFG[rol]||NV_ROLE_CFG.auxiliar;
+    var sess={id:res.data.user.id,name:meta.nombre||email,role:rol,tabs:cfg.tabs,canDelete:cfg.canDelete,readOnly:cfg.readOnly,ts:Date.now()};
+    if(rem){localStorage.setItem('nv_session',JSON.stringify(sess));}else{sessionStorage.setItem('nv_session',JSON.stringify(sess));}
+    nvApplySession(sess);
+    setTimeout(nvPullFromSupabase,800);
+  });
+}
+function nvApplySession(sess){
+  document.getElementById('nv-login').classList.add('hidden');
+  document.body.className='role-'+sess.role;
+  document.querySelectorAll('.mtab').forEach(function(t){t.style.display=sess.tabs.indexOf(t.id)>=0?'':'none';});
+  var un=document.getElementById('hUserName');if(un)un.textContent=sess.name;
+  var roles={admin:'Admin',auxiliar:'Auxiliar',contable:'Contable',gerencia:'Gerencia'};
+  var ur=document.getElementById('hUserRole');if(ur)ur.textContent=roles[sess.role]||sess.role;
+  var ft=document.getElementById(sess.tabs[0]);if(ft)ft.click();
+}
+function nvShowLogin(){
+  if(_sb)_sb.auth.signOut();
+  localStorage.removeItem('nv_session');sessionStorage.removeItem('nv_session');
+  var lg=document.getElementById('nv-login');if(lg)lg.classList.remove('hidden');
+  var em=document.getElementById('nv-email');if(em)em.value='';
+  var ps=document.getElementById('nv-pass');if(ps)ps.value='';
+  var er=document.getElementById('nv-lerr');if(er)er.classList.remove('on');
+  document.body.className='';
+  document.querySelectorAll('.mtab').forEach(function(t){t.style.display='';t.classList.remove('on');});
+  document.querySelectorAll('.msec').forEach(function(s){s.classList.remove('on');});
+}
+function nvForgot(){alert('Para restablecer tu contrasena contacta al administrador: anuartalaigua0403@gmail.com');}
+function nvPullFromSupabase(){
+  if(!_sb)return;
+  _sb.from('sync_store').select('key,value').then(function(res){
+    if(res.error||!res.data||!res.data.length)return;
+    res.data.forEach(function(row){
+      if(row.key==='nv_v6'&&row.value&&row.value!=='[]'){localStorage.setItem('nv_v6',row.value);}
+      if(row.key==='nv_users'&&row.value&&row.value!=='[]'){localStorage.setItem('nv_users',row.value);}
+    });
+    if(typeof loadOrders==='function')loadOrders();
+    if(typeof renderTable==='function')renderTable();
+  });
+}
+function nvPushToSupabase(){
+  if(!_sb)return;
+  var casos=localStorage.getItem('nv_v6')||'[]';
+  var emps=localStorage.getItem('nv_users')||'[]';
+  _sb.from('sync_store').upsert([{key:'nv_v6',value:casos,updated_at:new Date().toISOString()},{key:'nv_users',value:emps,updated_at:new Date().toISOString()}],{onConflict:'key'}).then(function(){});
+}
+setInterval(nvPushToSupabase,3*60*1000);
+window.addEventListener('beforeunload',nvPushToSupabase);
+window.addEventListener("DOMContentLoaded",function(){
+  window.showLoginScreen=function(){nvShowLogin();};
+  window.doLogout=function(){nvShowLogin();};
+  var ol=document.getElementById('loginScreen');
+  if(ol)ol.style.setProperty('display','none','important');
+  if(!_sb){document.getElementById('nv-login').classList.remove('hidden');return;}
+  _sb.auth.getSession().then(function(res){
+    if(res.data&&res.data.session&&res.data.session.user){
+      var u=res.data.session.user;
+      var meta=u.user_metadata||{};
+      var rol=meta.rol||'auxiliar';
+      var cfg=NV_ROLE_CFG[rol]||NV_ROLE_CFG.auxiliar;
+      var sess={id:u.id,name:meta.nombre||u.email,role:rol,tabs:cfg.tabs,canDelete:cfg.canDelete,readOnly:cfg.readOnly,ts:Date.now()};
+      nvApplySession(sess);
+      setTimeout(nvPullFromSupabase,800);
+      return;
+    }
+    var stored=localStorage.getItem('nv_session')||sessionStorage.getItem('nv_session');
+    if(stored){
+      try{
+        var sess2=JSON.parse(stored);
+        var isLocal=!!localStorage.getItem('nv_session');
+        var maxAge=isLocal?7*24*3600*1000:24*3600*1000;
+        if(Date.now()-sess2.ts<maxAge){nvApplySession(sess2);return;}
+      }catch(e){}
+      localStorage.removeItem('nv_session');sessionStorage.removeItem('nv_session');
+    }
+    document.getElementById('nv-login').classList.remove('hidden');
+  });
+// ═══ CLIENTE SEARCH AUTOCOMPLETE ═══
+var _nvClienteTmr=null;
+var _nvIgnoreNextInput=false;
+window._nvSelectedCliente=null;
+window.nvSearchCliente=function(q){
+  clearTimeout(_nvClienteTmr);
+  if(_nvIgnoreNextInput){_nvIgnoreNextInput=false;return;}
+  var hDent=document.getElementById('nDent');
+  var hId=document.getElementById('nClienteId');
+  if(hDent)hDent.value='';
+  if(hId)hId.value='';
+  window._nvSelectedCliente=null;
+  if(!q||q.length<2){nvCloseClienteDropdown();return;}
+  _nvClienteTmr=setTimeout(async function(){
+    try{
+      var r=await _sb.from('clientes').select('id,nombre_completo,identificacion,ciudad,pais').or('nombre_completo.ilike.%'+q+'%,identificacion.ilike.%'+q+'%').limit(10);
+      nvShowClienteDropdown(r.data||[]);
+    }catch(e){console.error('nvSearchCliente:',e);}
+  },300);
+}
+window.nvShowClienteDropdown=function(items){
+  var drop=document.getElementById('nDentDrop');
+  if(!drop)return;
+  if(!items||!items.length){drop.style.display='none';return;}
+  drop.innerHTML=items.map(function(c){
+    var nm=(c.nombre_completo||'').replace(/'/g,'&#39;');
+    var idc=(c.identificacion||'').replace(/'/g,'&#39;');
+    var ci=(c.ciudad||'').replace(/'/g,'&#39;');
+    var pa=(c.pais||'').replace(/'/g,'&#39;');
+    var uid=c.id;
+    return '<div data-uid="'+uid+'" data-nm="'+nm+'" data-idc="'+idc+'" data-ci="'+ci+'" data-pa="'+pa+'" onclick="nvSelectCliente(this)" class="nv-cli-item" style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;">'
+    +'<div style="font-weight:600;color:#1e3a5f;">'+nm+'</div>'
+    +'<div style="color:#6b7280;font-size:11px;">ID: '+idc+(ci?' · '+ci:'')+'</div></div>';
+  }).join('');
+  drop.style.display='block';
+}
+window.nvSelectCliente=function(el){
+  var nm=el.getAttribute('data-nm')||'';
+  var idc=el.getAttribute('data-idc')||'';
+  var ci=el.getAttribute('data-ci')||'';
+  var pa=el.getAttribute('data-pa')||'';
+  var uid=el.getAttribute('data-uid')||'';
+  window._nvSelectedCliente={id:uid,nombre_completo:nm,identificacion:idc,ciudad:ci,pais:pa};
+  var srch=document.getElementById('nDentSearch');
+  var hDent=document.getElementById('nDent');
+  var hId=document.getElementById('nClienteId');
+  _nvIgnoreNextInput=true;
+  if(srch)srch.value=nm;
+  if(hDent)hDent.value=nm;
+  if(hId)hId.value=uid;
+  var cityEl=document.getElementById('nCity');
+  if(cityEl&&ci)cityEl.value=ci;
+  var countryEl=document.getElementById('nCountry');
+  if(countryEl&&pa){
+    var paLow=pa.toLowerCase();
+    for(var i=0;i<countryEl.options.length;i++){
+      if(countryEl.options[i].text.toLowerCase()===paLow){countryEl.selectedIndex=i;break;}
+    }
+  }
+  nvCloseClienteDropdown();
+}
+window.nvCloseClienteDropdown=function(){
+  var d=document.getElementById('nDentDrop');
+  if(d)d.style.display='none';
+};
+(function(){
+  var _origOpenNew=window.openNew;
+  window.openNew=function(){
+    if(_origOpenNew)_origOpenNew.apply(this,arguments);
+    setTimeout(function(){
+      var s=document.getElementById('nDentSearch');
+      if(s)s.value='';
+      var h=document.getElementById('nDent');
+      if(h)h.value='';
+      var hId=document.getElementById('nClienteId');
+      if(hId)hId.value='';
+      nvCloseClienteDropdown();
+      window._nvSelectedCliente=null;
+    },50);
+  };
+})();
+    // ═══ NUEVO CLIENTE MODAL ═══
+    window.nvOpenNuevoCliente=function(){
+      document.getElementById('nvNuevoClienteModal').style.display='flex';
+      document.getElementById('nvNC_nombre').value='';
+      document.getElementById('nvNC_id').value='';
+      document.getElementById('nvNC_tel').value='';
+      document.getElementById('nvNC_email').value='';
+      document.getElementById('nvNC_ciudad').value='';
+      document.getElementById('nvNC_pais').value='';
+      document.getElementById('nvNC_err').textContent='';
+      setTimeout(function(){document.getElementById('nvNC_nombre').focus();},100);
+    };
+    window.nvCloseNuevoCliente=function(){
+      document.getElementById('nvNuevoClienteModal').style.display='none';
+    };
+    window.nvGuardarCliente=async function(){
+      var nm=(document.getElementById('nvNC_nombre').value||'').trim();
+      var idc=(document.getElementById('nvNC_id').value||'').trim();
+      var tel=(document.getElementById('nvNC_tel').value||'').trim();
+      var eml=(document.getElementById('nvNC_email').value||'').trim();
+      var ci=(document.getElementById('nvNC_ciudad').value||'').trim();
+      var pa=(document.getElementById('nvNC_pais').value||'').trim();
+      var errEl=document.getElementById('nvNC_err');
+      if(!nm){errEl.textContent='El nombre completo es obligatorio.';return;}
+      if(!idc){errEl.textContent='La identificación es obligatoria.';return;}
+      if(!ci){errEl.textContent='La ciudad es obligatoria.';return;}
+      if(!pa){errEl.textContent='El país es obligatorio.';return;}
+      errEl.textContent='';
+      var btn=document.getElementById('nvNC_btn');
+      btn.disabled=true;btn.textContent='Guardando...';
+      try{
+        var obj={nombre_completo:nm,identificacion:idc,ciudad:ci,pais:pa};
+        if(tel)obj.telefono=tel;
+        if(eml)obj.correo=eml;
+        var r=await _sb.from('clientes').insert(obj).select('id,nombre_completo,identificacion,ciudad,pais').single();
+        if(r.error){errEl.textContent='Error: '+(r.error.message||'No se pudo guardar.');btn.disabled=false;btn.textContent='Guardar';return;}
+        var c=r.data;
+        window._nvSelectedCliente={id:c.id,nombre_completo:c.nombre_completo,identificacion:c.identificacion,ciudad:c.ciudad,pais:c.pais};
+        var srch=document.getElementById('nDentSearch');
+        var hDent=document.getElementById('nDent');
+        var hId=document.getElementById('nClienteId');
+        _nvIgnoreNextInput=true;
+        if(srch)srch.value=c.nombre_completo;
+        if(hDent)hDent.value=c.nombre_completo;
+        if(hId)hId.value=c.id;
+        var cityEl=document.getElementById('nCity');
+        if(cityEl&&c.ciudad)cityEl.value=c.ciudad;
+        var countryEl=document.getElementById('nCountry');
+        if(countryEl&&c.pais){
+          var paLow=(c.pais||'').toLowerCase();
+          for(var i=0;i<countryEl.options.length;i++){
+            if(countryEl.options[i].text.toLowerCase()===paLow){countryEl.selectedIndex=i;break;}
+          }
+        }
+        nvCloseClienteDropdown();
+        nvCloseNuevoCliente();
+      }catch(e){errEl.textContent='Error inesperado: '+e.message;btn.disabled=false;btn.textContent='Guardar';}
+      finally{if(btn.disabled){btn.disabled=false;btn.textContent='Guardar';}}
+    };
+    // ═══ SUPABASE CASOS SYNC ═══
+    function nvMapCasoToDb(o){
+      var total=0;
+      if(o.items)o.items.forEach(function(it){var s=(it.unitPrice||0)*(it.units||1);if(it.discountType==='%')s*=(1-(it.discount||0)/100);else s-=(it.discount||0);total+=s;});
+      return{id:o.id,internal_id:o.internalId||null,created_at:o.createdAt||null,updated_at:new Date().toISOString(),
+        dentist:o.dentist||null,cliente_id:null,patient:o.patient||null,patient_age:o.patientAge||null,
+        phone:o.phone||null,city:o.city||null,country:o.country||null,urgency:o.urgency||null,
+        delivery_date:o.deliveryDate||null,color_solicitado:o.colorSolicitado||null,color_sustrato:o.colorSustrato||null,
+        aditamentos:o.aditamentos||null,impresion:o.impresion||null,notes:o.notes||null,currency:o.currency||'COP',
+        modelos_sup:!!(o.modelos&&o.modelos.sup),modelos_inf:!!(o.modelos&&o.modelos.inf),
+        cubeta_sup:!!(o.cubeta&&o.cubeta.sup),cubeta_inf:!!(o.cubeta&&o.cubeta.inf),
+        registro_mordida:!!o.registroMordida,fotos:!!o.fotos,
+        items:o.items||[],total:total,
+        advance_amount:o.advanceAmount||0,advance_currency:o.advanceCurrency||null,
+        advance_method:o.advanceMethod||null,advance_date:o.advanceDate||null,
+        additional_payments:o.additionalPayments||[],
+        invoiced:!!o.invoiced,invoice_number:o.invoiceNumber||null,invoice_date:o.invoiceDate||null,
+        fully_paid:!!o.fullyPaid,paid_date:o.paidDate||null,
+        resp_recibido:o.responsibles&&o.responsibles.received||null,
+        resp_digital:o.responsibles&&o.responsibles.digital||null,
+        resp_impresion:o.responsibles&&o.responsibles.printing||null,
+        resp_inyeccion:o.responsibles&&o.responsibles.injection||null,
+        resp_ceramica:o.responsibles&&o.responsibles.ceramic||null,
+        resp_calidad:o.responsibles&&o.responsibles.quality||null,
+        history:o.history||[],comments:o.comments||[],
+        shipping_carrier:o.shipping&&o.shipping.carrier||null,
+        shipping_dispatch_date:o.shipping&&o.shipping.dispatchDate||null,
+        shipping_tracking:o.shipping&&o.shipping.trackingNumber||null,
+        completed_at:o.completedAt||null,status:o.status||'received',
+        lifecycle_status:o.lifecycleStatus||'active',is_warranty:!!o.isWarranty,
+        warranty_reason:o.warrantyReason||null,warranty_area:o.warrantyArea||null,
+        original_case_id:o.originalCaseId||null,is_archived:!!o.isArchived,archived_at:o.archivedAt||null};
+    }
+    var _nvSyncTimer=null;
+    function nvSyncCasosSupabase(){
+      clearTimeout(_nvSyncTimer);
+      _nvSyncTimer=setTimeout(async function(){
+        try{
+          if(!orders||!orders.length)return;
+          var rows=orders.map(nvMapCasoToDb);
+          await _sb.from('casos').upsert(rows,{onConflict:'id'});
+        }catch(e){console.warn('nvSyncCasos:',e);}
+      },2000);
+    }
+    window.nvExportCasosExcel=async function(){
+      var btn=event&&event.target;if(btn){btn.disabled=true;btn.textContent='Cargando...';}
+      try{
+        var r=await _sb.from('casos').select('*').order('created_at',{ascending:false});
+        if(r.error)throw r.error;
+        var data=r.data||[];
+        if(!data.length){alert('No hay casos en la base de datos todavía.');return;}
+        var rows=data.map(function(c){
+          return{
+            'Consecutivo':c.id,'ID Interno':c.internal_id||'',
+            'Fecha Recepción':c.created_at?new Date(c.created_at).toLocaleDateString('es-CO'):'',
+            'Fecha Entrega':c.delivery_date||'',
+            'Dentista/Clínica':c.dentist||'','Paciente':c.patient||'',
+            'Edad':c.patient_age||'','Teléfono':c.phone||'',
+            'Ciudad':c.city||'','País':c.country||'',
+            'Urgencia':c.urgency||'','Estado':c.status||'',
+            'Moneda':c.currency||'','Total':c.total||0,
+            'Anticipo':c.advance_amount||0,'Método Anticipo':c.advance_method||'',
+            'Recibido por':c.resp_recibido||'','Digital/CAD por':c.resp_digital||'',
+            'Impresión por':c.resp_impresion||'','Inyección por':c.resp_inyeccion||'',
+            'Cerámica por':c.resp_ceramica||'','Control Calidad por':c.resp_calidad||'',
+            'Color Solicitado':c.color_solicitado||'','Color Sustrato':c.color_sustrato||'',
+            'Aditamentos':c.aditamentos||'','Tipo Impresión':c.impresion||'',
+            'Modelos Sup':c.modelos_sup?'Sí':'No','Modelos Inf':c.modelos_inf?'Sí':'No',
+            'Cubeta Sup':c.cubeta_sup?'Sí':'No','Cubeta Inf':c.cubeta_inf?'Sí':'No',
+            'Reg. Mordida':c.registro_mordida?'Sí':'No','Fotos':c.fotos?'Sí':'No',
+            'Productos':Array.isArray(c.items)?c.items.map(function(it){return it.units+'x '+it.product;}).join(' | '):'',
+            'Facturado':c.invoiced?'Sí':'No','N° Factura':c.invoice_number||'',
+            'Pagado':c.fully_paid?'Sí':'No',
+            'Transportadora':c.shipping_carrier||'',
+            'Fecha Despacho':c.shipping_dispatch_date||'','Tracking':c.shipping_tracking||'',
+            'Notas':c.notes||'',
+            'Repetición/Garantía':c.is_warranty?'Sí':'No','Motivo Garantía':c.warranty_reason||'',
+            'Estado Ciclo':c.lifecycle_status||''
+          };
+        });
+        var wb=XLSX.utils.book_new();
+        var ws=XLSX.utils.json_to_sheet(rows);
+        ws['!cols']=[{wch:14},{wch:12},{wch:16},{wch:14},{wch:22},{wch:20},{wch:6},{wch:14},{wch:12},{wch:10},{wch:10},{wch:14},{wch:8},{wch:12},{wch:12},{wch:16},{wch:16},{wch:16},{wch:16},{wch:16},{wch:16},{wch:16},{wch:14},{wch:14},{wch:18},{wch:14},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:8},{wch:35},{wch:10},{wch:12},{wch:10},{wch:14},{wch:14},{wch:14},{wch:30},{wch:10},{wch:20},{wch:12}];
+        XLSX.utils.book_append_sheet(wb,ws,'Historial Casos');
+        var fecha=new Date().toISOString().slice(0,10);
+        XLSX.writeFile(wb,'HistorialCasos_'+fecha+'.xlsx');
+      }catch(e){alert('Error al exportar: '+e.message);}
+      finally{if(btn){btn.disabled=false;btn.innerHTML='<span>⬇</span><span>Exportar Excel</span>';}}
+    };
+});;
 </script>
+<!-- MODAL NUEVO CLIENTE -->
+<div id="nvNuevoClienteModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.45);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:28px 32px;width:100%;max-width:460px;box-shadow:0 8px 32px rgba(0,0,0,.22);position:relative;">
+    <button onclick="nvCloseNuevoCliente()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#6b7280;" title="Cerrar">✕</button>
+    <h3 style="margin:0 0 20px;font-size:17px;color:#1e3a5f;font-weight:700;">Nuevo Cliente</h3>
+    <div style="display:flex;flex-direction:column;gap:13px;">
+      <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Nombre Completo <span style="color:#e53e3e;">*</span></label><input id="nvNC_nombre" class="fi" placeholder="Nombre completo" style="width:100%;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Identificación <span style="color:#e53e3e;">*</span></label><input id="nvNC_id" class="fi" placeholder="Cédula o NIT" style="width:100%;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Teléfono</label><input id="nvNC_tel" class="fi" placeholder="Opcional" style="width:100%;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Correo</label><input id="nvNC_email" class="fi" placeholder="Opcional" type="email" style="width:100%;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Ciudad <span style="color:#e53e3e;">*</span></label><input id="nvNC_ciudad" class="fi" placeholder="Ciudad" style="width:100%;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">País <span style="color:#e53e3e;">*</span></label><input id="nvNC_pais" class="fi" placeholder="País" style="width:100%;box-sizing:border-box;"></div>
+    </div>
+    <div id="nvNC_err" style="color:#e53e3e;font-size:12px;margin-top:10px;min-height:16px;"></div>
+    <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end;">
+      <button onclick="nvCloseNuevoCliente()" style="padding:8px 18px;border-radius:6px;border:1px solid #d1d5db;background:#f9fafb;color:#374151;font-size:13px;cursor:pointer;">Cancelar</button>
+      <button id="nvNC_btn" onclick="nvGuardarCliente()" style="padding:8px 22px;border-radius:6px;border:none;background:var(--acc);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">Guardar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
