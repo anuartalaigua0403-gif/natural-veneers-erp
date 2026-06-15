@@ -963,6 +963,7 @@ body.role-auxiliar button[onclick*="deleteCase"],body.role-auxiliar button[oncli
 body.role-auxiliar button[onclick*="deleteOrder"],
 body.role-contable button[onclick*="deleteCase"],body.role-contable button[onclick*="deleteUser"],
 body.role-contable button[onclick*="deleteOrder"]{display:none!important;}
+.nv-cli-item:hover{background:#eff6ff !important;}
 </style>
 </head>
 <body>
@@ -4384,7 +4385,7 @@ window.nvShowClienteDropdown=function(items){
     var ci=(c.ciudad||'').replace(/'/g,'&#39;');
     var pa=(c.pais||'').replace(/'/g,'&#39;');
     var uid=c.id;
-    return '<div data-uid="'+uid+'" data-nm="'+nm+'" data-idc="'+idc+'" data-ci="'+ci+'" data-pa="'+pa+'" onclick="nvSelectCliente(this)" style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;">'
+    return '<div data-uid="'+uid+'" data-nm="'+nm+'" data-idc="'+idc+'" data-ci="'+ci+'" data-pa="'+pa+'" onclick="nvSelectCliente(this)" class="nv-cli-item" style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6;">'
     +'<div style="font-weight:600;color:#1e3a5f;">'+nm+'</div>'
     +'<div style="color:#6b7280;font-size:11px;">ID: '+idc+(ci?' · '+ci:'')+'</div></div>';
   }).join('');
