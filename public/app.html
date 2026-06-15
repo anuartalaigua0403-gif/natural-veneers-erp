@@ -4306,8 +4306,7 @@ function nvShowLogin(){
   document.querySelectorAll('.mtab').forEach(function(t){t.style.display='';t.classList.remove('on');});
   document.querySelectorAll('.msec').forEach(function(s){s.classList.remove('on');});
 }
-function nvForgot(){alert('Para restablecer tu contrasena contacta al administrador:
-anuartalaigua0403@gmail.com');}
+function nvForgot(){alert('Para restablecer tu contrasena contacta al administrador: anuartalaigua0403@gmail.com');}
 function nvPullFromSupabase(){
   if(!_sb)return;
   _sb.from('sync_store').select('key,value').then(function(res){
