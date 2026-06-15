@@ -953,6 +953,7 @@ html.light .cc:hover{background:#fff;}
 /* ═══ PERMISOS POR ROL ═══ */
 body.role-auxiliar #mt-pr,body.role-auxiliar #mt-da,body.role-auxiliar #mt-cfg,
 body.role-contable #mt-pr,body.role-contable #mt-da,body.role-contable #mt-cfg{display:none!important;}
+body.role-gerencia #mt-fi,body.role-gerencia #mt-da,body.role-gerencia #mt-rp,body.role-gerencia #mt-cfg{display:none!important;}
 body.role-gerencia button[onclick*="openNew"],body.role-gerencia button[onclick*="createCase"],
 body.role-gerencia button[onclick*="addItem"],body.role-gerencia button[onclick*="savePayment"],
 body.role-gerencia button[onclick*="confirmInvoice"],body.role-gerencia button[onclick*="saveNewUser"],
@@ -4260,7 +4261,7 @@ var NV_USERS=[
   {id:"adm01",name:"Anuar Talaigua",role:"admin",email:"anuartalaigua0403@gmail.com",hash:"8b7fbab7c3eaa7db59d3dd90e00e638d8dce6d9cf80c139a78e74d3744b3c3a9",tabs:["mt-op","mt-fi","mt-pr","mt-da","mt-rp","mt-cfg"],canDelete:true,readOnly:false},
   {id:"aux01",name:"Mabridis Carolina",role:"auxiliar",email:"mabridiscarolinaroabolivar@gmail.com",hash:"a177160508c0f3ca892191117a4ce2059c5cd47040033fa436d87feb137162d7",tabs:["mt-op","mt-fi","mt-rp"],canDelete:false,readOnly:false},
   {id:"con01",name:"Sheyla Barrios",role:"contable",email:"sheylaisabel2017@gmail.com",hash:"44c04587510693b9f3e684555c81c2bd1aa0f9b982f808856deb7e4739980459",tabs:["mt-op","mt-fi","mt-rp"],canDelete:false,readOnly:false},
-  {id:"ger01",name:"Gerencia",role:"gerencia",email:"gerencia@naturalveneers.co",hash:"95980cc32fcb13bfaedf96d13f5e850ae93583994ce68264ac73c2084d5e0069",tabs:["mt-op","mt-fi","mt-pr","mt-da","mt-rp","mt-cfg"],canDelete:false,readOnly:true}
+  {id:"ger01",name:"Gerencia",role:"gerencia",email:"gerencia@naturalveneers.co",hash:"95980cc32fcb13bfaedf96d13f5e850ae93583994ce68264ac73c2084d5e0069",tabs:["mt-op","mt-pr"],canDelete:false,readOnly:true}
 ];
 function nvHash(p){return crypto.subtle.digest("SHA-256",new TextEncoder().encode(p)).then(function(b){return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0");}).join("");});}
 function nvLogin(){
