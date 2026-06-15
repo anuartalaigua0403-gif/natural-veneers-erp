@@ -4359,9 +4359,11 @@ window.addEventListener("DOMContentLoaded",function(){
   });
 // ═══ CLIENTE SEARCH AUTOCOMPLETE ═══
 var _nvClienteTmr=null;
+var _nvIgnoreNextInput=false;
 window._nvSelectedCliente=null;
 window.nvSearchCliente=function(q){
   clearTimeout(_nvClienteTmr);
+  if(_nvIgnoreNextInput){_nvIgnoreNextInput=false;return;}
   var hDent=document.getElementById('nDent');
   var hId=document.getElementById('nClienteId');
   if(hDent)hDent.value='';
@@ -4401,6 +4403,7 @@ window.nvSelectCliente=function(el){
   var srch=document.getElementById('nDentSearch');
   var hDent=document.getElementById('nDent');
   var hId=document.getElementById('nClienteId');
+  _nvIgnoreNextInput=true;
   if(srch)srch.value=nm;
   if(hDent)hDent.value=nm;
   if(hId)hId.value=uid;
@@ -4418,7 +4421,7 @@ window.nvSelectCliente=function(el){
 window.nvCloseClienteDropdown=function(){
   var d=document.getElementById('nDentDrop');
   if(d)d.style.display='none';
-}
+};
 (function(){
   var _origOpenNew=window.openNew;
   window.openNew=function(){
