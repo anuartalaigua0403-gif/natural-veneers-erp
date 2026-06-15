@@ -1479,7 +1479,7 @@ html.light .cc:hover{background:#fff;}
       <div class="fg"><div class="flbl">Desde</div><input class="fi" type="date" id="rp-sales-from"></div>
       <div class="fg"><div class="flbl">Hasta</div><input class="fi" type="date" id="rp-sales-to"></div>
       <div class="fg"><div class="flbl">Doctor / Cliente</div><input class="fi" type="text" id="rp-sales-dr" placeholder="Buscar..."></div>
-      <button class="btn btn-p" onclick="renderRptSales()">🔍 Filtrar</button>
+      <div class="fg" style="min-width:160px"><label class="flbl">💱 TRM USD/COP</label><input class="fi" id="rp-sales-trm" type="number" value="4200" min="1" step="10" placeholder="4200" oninput="renderRptSales()" style="width:100%"></div><button class="btn btn-p" onclick="renderRptSales()">🔍 Filtrar</button>
       <button class="btn btn-g" onclick="exportRptExcel('sales')">⬇ Excel</button>
     </div>
     <div class="krow">
@@ -1829,7 +1829,7 @@ const EMP_BY_STAGE={
   digital:['Yeiner','César'],
   printing:['Yeiner','César','Eliecer','Karolay'],
   injection:['Eliecer','Yeiner','César','Karolay'],
-  ceramic:['Alexander','Eidy','Yesid','Karolay'],
+  ceramic:['Alexander','Keidy','Yesid','Karolay'],
   qc:ALL_EMPS,
   dispatch:['Sheyla','Mabridis'],
 };
@@ -3679,7 +3679,7 @@ async function initAuth(){
       {email:'eliecer@naturalveneers.com',name:'Eliecer',role:'asistente',department:'IMPRESIÓN E INYECCIÓN',departments:['IMPRESIÓN E INYECCIÓN'],passwordHash:await hashPw(pw),permissions:{...DEFAULT_ASISTENTE_PERMS}},
       {email:'karolay@naturalveneers.com',name:'Karolay',role:'asistente',department:'IMPRESIÓN E INYECCIÓN',departments:['IMPRESIÓN E INYECCIÓN','CERÁMICA'],passwordHash:await hashPw(pw),permissions:{...DEFAULT_ASISTENTE_PERMS}},
       {email:'alexander@naturalveneers.com',name:'Alexander',role:'asistente',department:'CERÁMICA',departments:['CERÁMICA'],passwordHash:await hashPw(pw),permissions:{...DEFAULT_ASISTENTE_PERMS}},
-      {email:'eidy@naturalveneers.com',name:'Eidy',role:'asistente',department:'CERÁMICA',departments:['CERÁMICA'],passwordHash:await hashPw(pw),permissions:{...DEFAULT_ASISTENTE_PERMS}},
+      {email:'eidy@naturalveneers.com',name:'Keidy',role:'asistente',department:'CERÁMICA',departments:['CERÁMICA'],passwordHash:await hashPw(pw),permissions:{...DEFAULT_ASISTENTE_PERMS}},
       {email:'yesid@naturalveneers.com',name:'Yesid',role:'asistente',department:'CERÁMICA',departments:['CERÁMICA'],passwordHash:await hashPw(pw),permissions:{...DEFAULT_ASISTENTE_PERMS}},
     ];
     localStorage.setItem('nv_users',JSON.stringify(users));
@@ -4066,6 +4066,8 @@ function checkDelayNotifications(){
 initAuth().then(()=>checkSession());
 
 /* ======================== INFORMES MODULE ======================== */
+// === MIGRACIÓN: Keidy + Martin ===
+(function(){try{var u=JSON.parse(localStorage.getItem('nv_users')||'[]');var dirty=false;u.forEach(function(x){if(x.name==='Keidy'){x.name='Keidy';dirty=true;}});if(!u.some(function(x){return x.name==='Martin';})){var tpl=u.find(function(x){return x.role==='asistente';})||{role:'asistente',department:'general'};var m=Object.assign({},tpl,{name:'Martin'});u.push(m);dirty=true;}if(dirty)localStorage.setItem('nv_users',JSON.stringify(u));}catch(e){}})();
 function switchRptSub(k){
   document.querySelectorAll('#sec-rp .stab').forEach(function(t){t.classList.remove('on');});
   document.querySelectorAll('.rpt-sec').forEach(function(s){s.classList.remove('on');});
@@ -4148,8 +4150,8 @@ function renderRptSales(){
   _rptOrders().forEach(function(o){
     if(!_inRange(o.createdAt,from,to))return;
     if(dr&&!(o.dentist||'').toLowerCase().includes(dr))return;
-    var b=0,d=0;
-    (o.items||[]).forEach(function(i){var g=(i.unitPrice||0)*(i.units||0);var dc=i.discountType==='%'?g*(i.discount||0)/100:(i.discount||0)*(i.units||0);b+=g;d+=dc;});
+    var trm=parseFloat((document.getElementById('rp-sales-trm')||{}).value)||4200;var b=0,d=0;
+    (o.items||[]).forEach(function(i){var g=(i.unitPrice||0)*(i.units||0)*(o.currency==='USD'?trm:1);var dc=i.discountType==='%'?g*(i.discount||0)/100:(i.discount||0)*(i.units||0);b+=g;d+=dc;});
     tB+=b;tD+=d;tN+=b-d;
     rows.push({caso:o.id,doctor:o.dentist,fecha:(o.createdAt||'').substring(0,10),bruto:b,desc:d,neto:b-d});
   });
