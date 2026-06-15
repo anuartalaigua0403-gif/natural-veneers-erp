@@ -1070,7 +1070,7 @@ html.light .cc:hover{background:#fff;}
   <div class="mtab" style="--tab-c:#10b981" id="mt-fi" onclick="switchMain('fi')"><span class="mic">💰</span>Finanzas</div>
   <div class="mtab" style="--tab-c:#8b5cf6" id="mt-pr" onclick="switchMain('pr')"><span class="mic">📊</span>Productividad</div>
   <div class="mtab" style="--tab-c:#f59e0b" id="mt-da" onclick="switchMain('da')"><span class="mic">🗂</span>Dashboard</div>
-  <div class="mtab" style="--tab-c:#0ea5e9" id="mt-rp" onclick="switchMain('rp');onRptPanelOpen()"><span class="mic">📈</span>Informes</div>
+  <div class="mtab" style="--tab-c:#0ea5e9" id="mt-rp" onclick="document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.msec').forEach(s=>s.classList.remove('on'));this.classList.add('on');document.getElementById('sec-rp').classList.add('on');onRptPanelOpen()"><span class="mic">📈</span>Informes</div>
   <div class="mtab" style="--tab-c:#64748b" id="mt-cfg" onclick="switchMain('cfg')"><span class="mic">⚙</span>Configuración</div>
 </div>
 
