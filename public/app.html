@@ -914,6 +914,10 @@ html.light .cc:hover{background:#fff;}
   .rgrid{grid-template-columns:repeat(2,1fr);}
   .price-grid{grid-template-columns:1fr;}
 }
+
+/* ===== INFORMES MODULE ===== */
+.rpt-sec{display:none}
+.rpt-sec.on{display:block}
 </style>
 </head>
 <body>
@@ -1066,6 +1070,7 @@ html.light .cc:hover{background:#fff;}
   <div class="mtab" style="--tab-c:#10b981" id="mt-fi" onclick="switchMain('fi')"><span class="mic">💰</span>Finanzas</div>
   <div class="mtab" style="--tab-c:#8b5cf6" id="mt-pr" onclick="switchMain('pr')"><span class="mic">📊</span>Productividad</div>
   <div class="mtab" style="--tab-c:#f59e0b" id="mt-da" onclick="switchMain('da')"><span class="mic">🗂</span>Dashboard</div>
+  <div class="mtab" style="--tab-c:#0ea5e9" id="mt-rp" onclick="switchMain('rp');onRptPanelOpen()"><span class="mic">📈</span>Informes</div>
   <div class="mtab" style="--tab-c:#64748b" id="mt-cfg" onclick="switchMain('cfg')"><span class="mic">⚙</span>Configuración</div>
 </div>
 
@@ -1400,6 +1405,98 @@ html.light .cc:hover{background:#fff;}
 
   </div>
 </div>
+
+
+<!-- ═══════════════ SECTION: INFORMES ═══════════════ -->
+<div class="msec" id="sec-rp">
+  <div class="snav">
+    <div class="stab on" id="rt-emp" onclick="switchRptSub('emp')">👤 Por Empleado</div>
+    <div class="stab" id="rt-area" onclick="switchRptSub('area')">🏭 Por Área</div>
+    <div class="stab" id="rt-warr" onclick="switchRptSub('warr')">🔁 Repeticiones y Garantías</div>
+    <div class="stab" id="rt-sales" onclick="switchRptSub('sales')">💵 Ventas por Cliente</div>
+  </div>
+
+  <!-- INFORME POR EMPLEADO -->
+  <div class="rpt-sec on" id="rs-emp">
+    <div style="padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid var(--bdr)">
+      <div class="fg"><div class="flbl">Desde</div><input class="fi" type="date" id="rp-emp-from"></div>
+      <div class="fg"><div class="flbl">Hasta</div><input class="fi" type="date" id="rp-emp-to"></div>
+      <div class="fg"><div class="flbl">Empleado</div><select class="fs" id="rp-emp-user"><option value="">Todos</option></select></div>
+      <div class="fg"><div class="flbl">Tipo de Producto</div><select class="fs" id="rp-emp-prod"><option value="">Todos</option></select></div>
+      <button class="btn btn-p" onclick="renderRptEmp()">🔍 Filtrar</button>
+      <button class="btn btn-g" onclick="exportRptExcel('emp')">⬇ Excel</button>
+    </div>
+    <div style="padding:14px 20px 20px">
+      <table class="tbl" id="tbl-rpt-emp">
+        <thead><tr><th>Caso</th><th>Empleado</th><th>Rol</th><th>Doctor</th><th>Paciente</th><th>Producto</th><th>Unidades</th><th>Fecha</th><th>Repetición</th></tr></thead>
+        <tbody><tr><td colspan="9" style="text-align:center;padding:30px;color:var(--tx3)">Aplica los filtros y haz clic en Filtrar</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- INFORME POR ÁREA -->
+  <div class="rpt-sec" id="rs-area">
+    <div style="padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid var(--bdr)">
+      <div class="fg"><div class="flbl">Desde</div><input class="fi" type="date" id="rp-area-from"></div>
+      <div class="fg"><div class="flbl">Hasta</div><input class="fi" type="date" id="rp-area-to"></div>
+      <div class="fg"><div class="flbl">Área</div>
+        <select class="fs" id="rp-area-dept">
+          <option value="">Todas</option>
+          <option>ADMINISTRACIÓN</option><option>DESPACHO</option>
+          <option>DIGITAL</option><option>IMPRESIÓN E INYECCIÓN</option><option>CERÁMICA</option>
+        </select>
+      </div>
+      <button class="btn btn-p" onclick="renderRptArea()">🔍 Filtrar</button>
+      <button class="btn btn-g" onclick="exportRptExcel('area')">⬇ Excel</button>
+    </div>
+    <div style="padding:14px 20px 20px">
+      <table class="tbl" id="tbl-rpt-area">
+        <thead><tr><th>Caso</th><th>Área</th><th>Doctor</th><th>Paciente</th><th>Unidades</th><th>Descripción</th><th>Fecha</th><th>Repetición</th></tr></thead>
+        <tbody><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--tx3)">Aplica los filtros y haz clic en Filtrar</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPETICIONES Y GARANTÍAS -->
+  <div class="rpt-sec" id="rs-warr">
+    <div style="padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid var(--bdr)">
+      <div class="fg"><div class="flbl">Desde</div><input class="fi" type="date" id="rp-warr-from"></div>
+      <div class="fg"><div class="flbl">Hasta</div><input class="fi" type="date" id="rp-warr-to"></div>
+      <button class="btn btn-p" onclick="renderRptWarr()">🔍 Filtrar</button>
+      <button class="btn btn-g" onclick="exportRptExcel('warr')">⬇ Excel</button>
+    </div>
+    <div style="padding:14px 20px 20px">
+      <table class="tbl" id="tbl-rpt-warr">
+        <thead><tr><th>Caso</th><th>Caso Original</th><th>Doctor</th><th>Paciente</th><th>Unidades</th><th>Descripción</th><th>Motivo</th><th>Diseño</th><th>Cerámica</th><th>Envío</th></tr></thead>
+        <tbody><tr><td colspan="10" style="text-align:center;padding:30px;color:var(--tx3)">Aplica los filtros y haz clic en Filtrar</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VENTAS POR CLIENTE -->
+  <div class="rpt-sec" id="rs-sales">
+    <div style="padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid var(--bdr)">
+      <div class="fg"><div class="flbl">Desde</div><input class="fi" type="date" id="rp-sales-from"></div>
+      <div class="fg"><div class="flbl">Hasta</div><input class="fi" type="date" id="rp-sales-to"></div>
+      <div class="fg"><div class="flbl">Doctor / Cliente</div><input class="fi" type="text" id="rp-sales-dr" placeholder="Buscar..."></div>
+      <button class="btn btn-p" onclick="renderRptSales()">🔍 Filtrar</button>
+      <button class="btn btn-g" onclick="exportRptExcel('sales')">⬇ Excel</button>
+    </div>
+    <div class="krow">
+      <div class="kcard gn"><div class="klbl">Facturación Bruta</div><div class="kval" id="rk-bruto">—</div></div>
+      <div class="kcard rd"><div class="klbl">Total Descuentos</div><div class="kval" id="rk-desc">—</div></div>
+      <div class="kcard bl"><div class="klbl">Total Neto COP</div><div class="kval" id="rk-neto">—</div></div>
+      <div class="kcard pu"><div class="klbl">Número de Casos</div><div class="kval" id="rk-casos">—</div></div>
+    </div>
+    <div style="padding:0 20px 20px">
+      <table class="tbl" id="tbl-rpt-sales">
+        <thead><tr><th>Caso</th><th>Doctor</th><th>Fecha</th><th style="text-align:right">Fact. Bruta</th><th style="text-align:right">Descuentos</th><th style="text-align:right">Total COP</th></tr></thead>
+        <tbody><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--tx3)">Aplica los filtros y haz clic en Filtrar</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 
 <!-- ═══════════════ SECTION: CONFIGURACIÓN ═══════════════ -->
 <div class="msec" id="sec-cfg">
@@ -3967,6 +4064,117 @@ function checkDelayNotifications(){
 
 // ════ INIT AUTH (must be last — all consts must be initialized first) ════
 initAuth().then(()=>checkSession());
+
+/* ======================== INFORMES MODULE ======================== */
+function switchRptSub(k){
+  document.querySelectorAll('#sec-rp .stab').forEach(function(t){t.classList.remove('on');});
+  document.querySelectorAll('.rpt-sec').forEach(function(s){s.classList.remove('on');});
+  var t=document.getElementById('rt-'+k),s=document.getElementById('rs-'+k);
+  if(t)t.classList.add('on');if(s)s.classList.add('on');
+}
+function _rptOrders(){try{return(JSON.parse(localStorage.getItem('nv_v6'))||{}).orders||[];}catch(e){return[];}}
+function _rptUsers(){try{return JSON.parse(localStorage.getItem('nv_users'))||[];}catch(e){return[];}}
+function _inRange(d,f,t){if(!d)return true;var x=d.substring(0,10);if(f&&x<f)return false;if(t&&x>t)return false;return true;}
+function fmtCOPRpt(n){return 'COP '+Math.round(n||0).toLocaleString('es-CO');}
+function onRptPanelOpen(){_initRptEmpSelects();renderRptEmp();}
+function _initRptEmpSelects(){
+  var us=_rptUsers(),os=_rptOrders(),ps=[];
+  os.forEach(function(o){(o.items||[]).forEach(function(i){if(ps.indexOf(i.product)<0)ps.push(i.product);});});
+  var uSel=document.getElementById('rp-emp-user');
+  if(uSel&&uSel.options.length<=1){us.forEach(function(u){var o=document.createElement('option');o.value=u.name;o.textContent=u.name;uSel.appendChild(o);});}
+  var pSel=document.getElementById('rp-emp-prod');
+  if(pSel&&pSel.options.length<=1){ps.sort().forEach(function(p){var o=document.createElement('option');o.value=p;o.textContent=p;pSel.appendChild(o);});}
+}
+function renderRptEmp(){
+  var from=document.getElementById('rp-emp-from').value,to=document.getElementById('rp-emp-to').value;
+  var user=document.getElementById('rp-emp-user').value,prod=document.getElementById('rp-emp-prod').value;
+  var orders=_rptOrders(),ROLES={received:'Recepción',digital:'Digital/CAD',printing:'Impresión/Fresado',injection:'Inyección',ceramic:'Cerámica'};
+  var rows=[],seen={};
+  orders.forEach(function(o){
+    if(!_inRange(o.createdAt,from,to))return;
+    (o.items||[]).forEach(function(item){
+      if(prod&&item.product!==prod)return;
+      Object.keys(o.responsibles||{}).forEach(function(role){
+        var nm=o.responsibles[role];if(!nm)return;if(user&&nm!==user)return;
+        var k=o.id+'|'+nm+'|'+item.product+'|'+role;if(seen[k])return;seen[k]=1;
+        rows.push({caso:o.id,empleado:nm,rol:ROLES[role]||role,doctor:o.dentist,paciente:o.patient,producto:item.product,unidades:item.units,fecha:(o.createdAt||'').substring(0,10),rep:o.isWarranty?'Repeticion':'No'});
+      });
+    });
+  });
+  var tb=document.querySelector('#tbl-rpt-emp tbody');
+  tb.innerHTML=rows.length?rows.map(function(r){return '<tr><td class="mono">'+r.caso+'</td><td>'+r.empleado+'</td><td>'+r.rol+'</td><td>'+r.doctor+'</td><td>'+r.paciente+'</td><td>'+r.producto+'</td><td style="text-align:center">'+r.unidades+'</td><td>'+r.fecha+'</td><td style="text-align:center;'+(r.rep!=='No'?'color:#ef4444;font-weight:600':'')+'">'+r.rep+'</td></tr>';}).join(''):'<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--tx3)">Sin resultados para el filtro aplicado</td></tr>';
+  window._rptEmpData=rows;
+}
+function renderRptArea(){
+  var from=document.getElementById('rp-area-from').value,to=document.getElementById('rp-area-to').value,dept=document.getElementById('rp-area-dept').value;
+  var orders=_rptOrders(),RD={received:['ADMINISTRACION','DESPACHO'],digital:['DIGITAL'],printing:['IMPRESION E INYECCION'],injection:['IMPRESION E INYECCION'],ceramic:['CERAMICA']};
+  var RDfull={received:['ADMINISTRACIÓN','DESPACHO'],digital:['DIGITAL'],printing:['IMPRESIÓN E INYECCIÓN'],injection:['IMPRESIÓN E INYECCIÓN'],ceramic:['CERÁMICA']};
+  var rows=[],seen={};
+  orders.forEach(function(o){
+    if(!_inRange(o.createdAt,from,to))return;
+    var desc=(o.items||[]).map(function(i){return i.units+'x '+i.product;}).join(', ');
+    var tu=(o.items||[]).reduce(function(s,i){return s+(i.units||0);},0);
+    Object.keys(o.responsibles||{}).forEach(function(role){
+      (RDfull[role]||[]).forEach(function(area){
+        if(dept&&area!==dept)return;
+        var k=o.id+'|'+area;if(seen[k])return;seen[k]=1;
+        rows.push({caso:o.id,area:area,doctor:o.dentist,paciente:o.patient,unidades:tu,descripcion:desc,fecha:(o.createdAt||'').substring(0,10),rep:o.isWarranty?'Repeticion':'No'});
+      });
+    });
+  });
+  var tb=document.querySelector('#tbl-rpt-area tbody');
+  tb.innerHTML=rows.length?rows.map(function(r){return '<tr><td class="mono">'+r.caso+'</td><td><span style="background:rgba(99,102,241,.15);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">'+r.area+'</span></td><td>'+r.doctor+'</td><td>'+r.paciente+'</td><td style="text-align:center">'+r.unidades+'</td><td style="font-size:12px">'+r.descripcion+'</td><td>'+r.fecha+'</td><td style="text-align:center;'+(r.rep!=='No'?'color:#ef4444;font-weight:600':'')+'">'+r.rep+'</td></tr>';}).join(''):'<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--tx3)">Sin resultados</td></tr>';
+  window._rptAreaData=rows;
+}
+function renderRptWarr(){
+  var from=document.getElementById('rp-warr-from').value,to=document.getElementById('rp-warr-to').value;
+  var rows=_rptOrders().filter(function(o){return o.isWarranty;}).filter(function(o){return _inRange(o.createdAt,from,to);}).map(function(o){
+    return{caso:o.id,original:o.originalCaseId||'N/A',doctor:o.dentist,paciente:o.patient,
+      unidades:(o.items||[]).reduce(function(s,i){return s+(i.units||0);},0),
+      descripcion:(o.items||[]).map(function(i){return i.units+'x '+i.product;}).join(', '),
+      motivo:o.warrantyReason||'Sin especificar',
+      disenio:(o.responsibles&&o.responsibles.digital)||'N/A',
+      ceramica:(o.responsibles&&o.responsibles.ceramic)||'N/A',
+      envio:(o.responsibles&&o.responsibles.received)||'N/A'};
+  });
+  var tb=document.querySelector('#tbl-rpt-warr tbody');
+  tb.innerHTML=rows.length?rows.map(function(r){return '<tr><td class="mono">'+r.caso+'</td><td class="mono" style="color:#f59e0b">'+r.original+'</td><td>'+r.doctor+'</td><td>'+r.paciente+'</td><td style="text-align:center">'+r.unidades+'</td><td style="font-size:12px">'+r.descripcion+'</td><td style="color:#ef4444">'+r.motivo+'</td><td>'+r.disenio+'</td><td>'+r.ceramica+'</td><td>'+r.envio+'</td></tr>';}).join(''):'<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--tx3)">Sin repeticiones en el período seleccionado</td></tr>';
+  window._rptWarrData=rows;
+}
+function renderRptSales(){
+  var from=document.getElementById('rp-sales-from').value,to=document.getElementById('rp-sales-to').value;
+  var dr=(document.getElementById('rp-sales-dr').value||'').toLowerCase().trim();
+  var rows=[],tB=0,tD=0,tN=0;
+  _rptOrders().forEach(function(o){
+    if(!_inRange(o.createdAt,from,to))return;
+    if(dr&&!(o.dentist||'').toLowerCase().includes(dr))return;
+    var b=0,d=0;
+    (o.items||[]).forEach(function(i){var g=(i.unitPrice||0)*(i.units||0);var dc=i.discountType==='%'?g*(i.discount||0)/100:(i.discount||0)*(i.units||0);b+=g;d+=dc;});
+    tB+=b;tD+=d;tN+=b-d;
+    rows.push({caso:o.id,doctor:o.dentist,fecha:(o.createdAt||'').substring(0,10),bruto:b,desc:d,neto:b-d});
+  });
+  document.getElementById('rk-bruto').textContent=fmtCOPRpt(tB);
+  document.getElementById('rk-desc').textContent=fmtCOPRpt(tD);
+  document.getElementById('rk-neto').textContent=fmtCOPRpt(tN);
+  document.getElementById('rk-casos').textContent=rows.length;
+  var tb=document.querySelector('#tbl-rpt-sales tbody');
+  tb.innerHTML=rows.length?rows.map(function(r){return '<tr><td class="mono">'+r.caso+'</td><td>'+r.doctor+'</td><td>'+r.fecha+'</td><td style="text-align:right">'+fmtCOPRpt(r.bruto)+'</td><td style="text-align:right;color:#ef4444">'+fmtCOPRpt(r.desc)+'</td><td style="text-align:right;font-weight:600;color:#10b981">'+fmtCOPRpt(r.neto)+'</td></tr>';}).join(''):'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--tx3)">Sin resultados</td></tr>';
+  window._rptSalesData=rows;
+}
+function exportRptExcel(type){
+  if(typeof XLSX==='undefined'){alert('XLSX no disponible');return;}
+  var data=[],fn='informe.xlsx';
+  if(type==='emp'){data=(window._rptEmpData||[]).map(function(r){return{'Caso':r.caso,'Empleado':r.empleado,'Rol':r.rol,'Doctor':r.doctor,'Paciente':r.paciente,'Producto':r.producto,'Unidades':r.unidades,'Fecha':r.fecha,'Repeticion':r.rep};});fn='informe_empleado.xlsx';}
+  else if(type==='area'){data=(window._rptAreaData||[]).map(function(r){return{'Caso':r.caso,'Area':r.area,'Doctor':r.doctor,'Paciente':r.paciente,'Unidades':r.unidades,'Descripcion':r.descripcion,'Fecha':r.fecha,'Repeticion':r.rep};});fn='informe_area.xlsx';}
+  else if(type==='warr'){data=(window._rptWarrData||[]).map(function(r){return{'Caso':r.caso,'Caso Original':r.original,'Doctor':r.doctor,'Paciente':r.paciente,'Unidades':r.unidades,'Descripcion':r.descripcion,'Motivo':r.motivo,'Disenio':r.disenio,'Ceramica':r.ceramica,'Envio':r.envio};});fn='repeticiones_garantias.xlsx';}
+  else if(type==='sales'){data=(window._rptSalesData||[]).map(function(r){return{'Caso':r.caso,'Doctor':r.doctor,'Fecha':r.fecha,'Facturacion Bruta COP':r.bruto,'Descuentos COP':r.desc,'Total Neto COP':r.neto};});fn='ventas_por_cliente.xlsx';}
+  if(!data.length){alert('Sin datos. Aplica el filtro primero.');return;}
+  var ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Informe');
+  XLSX.writeFile(wb,fn);
+}
+/* ======================== END INFORMES MODULE ======================== */
+
 </script>
 </body>
 </html>
