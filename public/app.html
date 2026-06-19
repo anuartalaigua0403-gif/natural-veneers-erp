@@ -2161,7 +2161,7 @@ function load(){
   }catch(e){orders=JSON.parse(JSON.stringify(SAMPLE)).map(migrate);}
   try{const p=localStorage.getItem('nv_prices');if(p)customPrices=JSON.parse(p);}catch(e){}
 }
-function save(){localStorage.setItem('nv_v6',JSON.stringify({orders,counter,cur,invCounter}));if(typeof nvSyncCasosSupabase==='function')nvSyncCasosSupabase();}
+function save(){localStorage.setItem('nv_v6',JSON.stringify({orders,counter,cur,invCounter}));_nvLocalChanges=true;if(typeof nvSyncCasosSupabase==='function')nvSyncCasosSupabase();}
 function savePrices(){localStorage.setItem('nv_prices',JSON.stringify(customPrices));}
 
 
@@ -4540,9 +4540,14 @@ window.nvCloseClienteDropdown=function(){
         try{
           if(!orders||!orders.length)return;
           var rows=orders.map(function(o){var r=nvMapCasoToDb(o);r.order_json=o;return r;});
-          await _sb.from('casos').upsert(rows,{onConflict:'id'});
+          var res=await _sb.from('casos').upsert(rows,{onConflict:'id'});
+          if(!res.error){
+            var fresh=await _sb.from('casos').select('id,updated_at').order('created_at',{ascending:false});
+            if(fresh.data)_nvLastSyncHash=fresh.data.map(function(r){return r.id+'|'+(r.updated_at||'');}).join(',');
+          }
         }catch(e){console.warn('nvSyncCasos:',e);}
-      },2000);
+        _nvLocalChanges=false;
+      },800);
     }
     window.nvExportCasosExcel=async function(){
       var btn=event&&event.target;if(btn){btn.disabled=true;btn.textContent='Cargando...';}
@@ -4639,7 +4644,7 @@ window.nvCloseClienteDropdown=function(){
       }catch(e){console.warn('nvLoadFromSupabase:',e);if(typeof nvSetSyncBadge==='function')nvSetSyncBadge(false);}
     }
 
-    var _nvLiveSyncInterval=null, _nvLastSyncHash='', _nvSyncBusy=false;
+    var _nvLiveSyncInterval=null, _nvLastSyncHash='', _nvSyncBusy=false, _nvLocalChanges=false;
 
     function nvStartLiveSync(){
       if(_nvLiveSyncInterval)clearInterval(_nvLiveSyncInterval);
@@ -4648,7 +4653,7 @@ window.nvCloseClienteDropdown=function(){
     }
 
     async function nvLiveSyncTick(){
-      if(_nvSyncBusy)return;
+      if(_nvSyncBusy||_nvLocalChanges)return;
       // No sincronizar si hay un modal abierto (usuario editando)
       var modals=['#nModal','#nvNuevoClienteModal'];
       for(var m of modals){var el=document.querySelector(m);if(el&&el.style.display==='flex')return;}
