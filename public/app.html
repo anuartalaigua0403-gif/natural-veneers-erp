@@ -4539,7 +4539,7 @@ window.nvCloseClienteDropdown=function(){
       _nvSyncTimer=setTimeout(async function(){
         try{
           if(!orders||!orders.length)return;
-          var rows=orders.map(nvMapCasoToDb);
+          var rows=orders.map(function(o){var r=nvMapCasoToDb(o);r.order_json=o;return r;});
           await _sb.from('casos').upsert(rows,{onConflict:'id'});
         }catch(e){console.warn('nvSyncCasos:',e);}
       },2000);
@@ -4591,6 +4591,7 @@ window.nvCloseClienteDropdown=function(){
     };
     // ═══ SUPABASE LIVE SYNC — actualización en tiempo real cada 3s ═══
     function nvMapDbToOrder(row){
+      if(row.order_json){return migrate(Object.assign({},row.order_json,{status:row.status||row.order_json.status||'received',updatedAt:row.updated_at}));}
       var _r={
         id:row.id, internalId:row.internal_id, createdAt:row.created_at,
         dentist:row.dentist, clienteId:row.cliente_id,
