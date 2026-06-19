@@ -2165,7 +2165,7 @@ function load(){
   }catch(e){orders=JSON.parse(JSON.stringify(SAMPLE)).map(migrate);}
   try{const p=localStorage.getItem('nv_prices');if(p)customPrices=JSON.parse(p);}catch(e){}
 }
-function save(){localStorage.setItem('nv_v6',JSON.stringify({orders,counter,cur,invCounter}));_nvLocalChanges=true;if(typeof nvSyncCasosSupabase==='function')nvSyncCasosSupabase();}
+function save(){localStorage.setItem('nv_v6',JSON.stringify({orders,counter,cur,invCounter}));_nvLocalChanges=true;var _sf=typeof nvSyncCasosSupabase==='function'?nvSyncCasosSupabase:window.nvSyncCasosSupabase;if(typeof _sf==='function')_sf();}
 function savePrices(){localStorage.setItem('nv_prices',JSON.stringify(customPrices));}
 
 
@@ -3829,7 +3829,8 @@ function showApp(){
   const savedTheme=localStorage.getItem('nv_theme');
   applyTheme(savedTheme==='light');
   applyRoleUI();setCur(cur);renderAll();
-  if(typeof nvLoadFromSupabase==='function')nvLoadFromSupabase().then(function(){renderAll();}).catch(function(){});
+  var _lf=typeof nvLoadFromSupabase==='function'?nvLoadFromSupabase:window.nvLoadFromSupabase;
+  if(typeof _lf==='function')_lf().then(function(){renderAll();if(typeof window.nvStartLiveSync==='function')window.nvStartLiveSync();}).catch(function(){});
 }
 function showLoginScreen(){document.getElementById('loginScreen').style.display='flex';
   document.getElementById('lgEmail').value='';
@@ -4783,6 +4784,11 @@ window.nvCloseClienteDropdown=function(){
         :'<span style="color:#ef4444;font-weight:600;">● Sin conexión</span>';
     }
 
+    // Exponer al scope global para que save() y showApp() puedan acceder
+    window.nvSyncCasosSupabase=nvSyncCasosSupabase;
+    window.nvLoadFromSupabase=nvLoadFromSupabase;
+    window.nvStartLiveSync=nvStartLiveSync;
+    window.nvSetSyncBadge=nvSetSyncBadge;
     // Iniciar live sync al cargar
     nvStartLiveSync();
 
