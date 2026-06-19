@@ -1078,6 +1078,7 @@ body.role-contable button[onclick*="deleteOrder"]{display:none!important;}
     <button class="bell-btn" id="bellBtn" onclick="toggleNotifPanel()" title="Notificaciones">🔔<span class="bell-badge hide" id="bellBadge">0</span></button>
   </div>
   <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
+  <div id="nvSyncBadge" style="font-size:11px;display:flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(0,0,0,.18);border-radius:6px;min-width:110px;"></div>
   <button class="btn-logout" onclick="doLogout()">Salir</button>
 </div>
 
@@ -4587,6 +4588,82 @@ window.nvCloseClienteDropdown=function(){
       }catch(e){alert('Error al exportar: '+e.message);}
       finally{if(btn){btn.disabled=false;btn.innerHTML='<span>⬇</span><span>Exportar Excel</span>';}}
     };
+    // ═══ SUPABASE LIVE SYNC — actualización en tiempo real cada 3s ═══
+    function nvMapDbToOrder(row){
+      return {
+        id:row.id, internalId:row.internal_id, createdAt:row.created_at,
+        dentist:row.dentist, clienteId:row.cliente_id,
+        patient:row.patient, patientAge:row.patient_age,
+        phone:row.phone, city:row.city, country:row.country,
+        urgency:row.urgency, deliveryDate:row.delivery_date,
+        colorSolicitado:row.color_solicitado, colorSustrato:row.color_sustrato,
+        aditamentos:row.aditamentos, impresion:row.impresion,
+        notes:row.notes, currency:row.currency||'COP',
+        modelos:{sup:!!row.modelos_sup, inf:!!row.modelos_inf},
+        cubeta:{sup:!!row.cubeta_sup, inf:!!row.cubeta_inf},
+        registroMordida:!!row.registro_mordida, fotos:!!row.fotos,
+        items:row.items||[], advanceAmount:row.advance_amount||0,
+        advanceCurrency:row.advance_currency, advanceMethod:row.advance_method,
+        advanceDate:row.advance_date, additionalPayments:row.additional_payments||[],
+        invoiced:!!row.invoiced, invoiceNumber:row.invoice_number, invoiceDate:row.invoice_date,
+        fullyPaid:!!row.fully_paid, paidDate:row.paid_date,
+        responsibles:{
+          received:row.resp_recibido, digital:row.resp_digital,
+          impresion:row.resp_impresion, inyeccion:row.resp_inyeccion,
+          ceramica:row.resp_ceramica, calidad:row.resp_calidad
+        },
+        history:row.history||[], comments:row.comments||[],
+        shipping:{carrier:row.shipping_carrier, dispatchDate:row.shipping_dispatch_date, tracking:row.shipping_tracking},
+        completedAt:row.completed_at, status:row.status||'received',
+        lifecycleStatus:row.lifecycle_status||'active',
+        isWarranty:!!row.is_warranty, warrantyReason:row.warranty_reason,
+        warrantyArea:row.warranty_area, originalCaseId:row.original_case_id,
+        isArchived:!!row.is_archived, archivedAt:row.archived_at
+      };
+    }
+
+    var _nvLiveSyncInterval=null, _nvLastSyncHash='', _nvSyncBusy=false;
+
+    function nvStartLiveSync(){
+      if(_nvLiveSyncInterval)clearInterval(_nvLiveSyncInterval);
+      nvLiveSyncTick();
+      _nvLiveSyncInterval=setInterval(nvLiveSyncTick,3000);
+    }
+
+    async function nvLiveSyncTick(){
+      if(_nvSyncBusy)return;
+      // No sincronizar si hay un modal abierto (usuario editando)
+      var modals=['#nModal','#nvNuevoClienteModal'];
+      for(var m of modals){var el=document.querySelector(m);if(el&&el.style.display==='flex')return;}
+      _nvSyncBusy=true;
+      try{
+        var res=await _sb.from('casos').select('*').order('created_at',{ascending:false});
+        if(res.error||!res.data){_nvSyncBusy=false;nvSetSyncBadge(false);return;}
+        var hash=res.data.map(function(r){return r.id+'|'+(r.updated_at||'');}).join(',');
+        if(hash===_nvLastSyncHash){_nvSyncBusy=false;return;}
+        _nvLastSyncHash=hash;
+        orders=res.data.map(nvMapDbToOrder);
+        // Guardar en localStorage sin disparar otro sync
+        try{localStorage.setItem('nv_v6',JSON.stringify({orders:orders,counter:counter,cur:cur,invCounter:invCounter}));}catch(e){}
+        // Re-renderizar vista activa
+        try{renderAll();}catch(e){console.warn('nvLiveSync render:',e);}
+        nvSetSyncBadge(true);
+      }catch(e){console.warn('nvLiveSync:',e);nvSetSyncBadge(false);}
+      _nvSyncBusy=false;
+    }
+
+    function nvSetSyncBadge(ok){
+      var el=document.getElementById('nvSyncBadge');
+      if(!el)return;
+      var t=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      el.innerHTML=ok
+        ?'<span style="color:#22c55e;font-weight:600;">● En línea</span><span style="margin-left:6px;color:#94a3b8;font-size:11px;">'+t+'</span>'
+        :'<span style="color:#ef4444;font-weight:600;">● Sin conexión</span>';
+    }
+
+    // Iniciar live sync al cargar
+    nvStartLiveSync();
+
 });;
 </script>
 <!-- MODAL NUEVO CLIENTE -->
