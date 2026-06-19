@@ -4751,6 +4751,16 @@ window.nvCloseClienteDropdown=function(){
       if(_nvLiveSyncInterval)clearInterval(_nvLiveSyncInterval);
       nvLiveSyncTick();
       _nvLiveSyncInterval=setInterval(nvLiveSyncTick,3000);
+      // Realtime: sync instantáneo entre usuarios
+      try{
+        if(_sb&&typeof _sb.channel==='function'){
+          _sb.channel('casos-rt').on('postgres_changes',{event:'*',schema:'public',table:'casos'},function(){
+            if(!_nvLocalChanges&&!_nvSyncBusy)nvLiveSyncTick();
+          }).subscribe(function(status){
+            if(typeof nvSetSyncBadge==='function')nvSetSyncBadge(status==='SUBSCRIBED'?'ok':'connecting');
+          });
+        }
+      }catch(e){console.warn('Realtime:',e);}
     }
 
     async function nvLiveSyncTick(){
