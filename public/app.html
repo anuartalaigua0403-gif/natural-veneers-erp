@@ -4424,13 +4424,8 @@ function nvPullFromSupabase(){
     if(typeof renderTable==='function')renderTable();
   });
 }
-function nvPushToSupabase(){
-  if(!_sb)return;
-  var casos=localStorage.getItem('nv_v6')||'[]';
-  var emps=localStorage.getItem('nv_users')||'[]';
-  _sb.from('sync_store').upsert([{key:'nv_v6',value:casos,updated_at:new Date().toISOString()},{key:'nv_users',value:emps,updated_at:new Date().toISOString()}],{onConflict:'key'}).then(function(){});
-}
-setInterval(nvPushToSupabase,3*60*1000);
+function nvPushToSupabase(){/* legacy sync_store - migrado a nvSyncCasosSupabase en casos tabla */}
+setInterval(function(){var _sf=typeof nvSyncCasosSupabase==="function"?nvSyncCasosSupabase:window.nvSyncCasosSupabase;if(typeof _sf==="function")_sf();},5*60*1000);
 window.addEventListener('beforeunload',nvPushToSupabase);
 window.addEventListener("DOMContentLoaded",function(){
   window.showLoginScreen=function(){nvShowLogin();};
