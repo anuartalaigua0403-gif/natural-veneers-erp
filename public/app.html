@@ -3817,6 +3817,7 @@ function showApp(){
   const savedTheme=localStorage.getItem('nv_theme');
   applyTheme(savedTheme==='light');
   applyRoleUI();setCur(cur);renderAll();
+  if(typeof nvLoadFromSupabase==='function')nvLoadFromSupabase().then(function(){renderAll();}).catch(function(){});
 }
 function showLoginScreen(){document.getElementById('loginScreen').style.display='flex';
   document.getElementById('lgEmail').value='';
@@ -4590,7 +4591,7 @@ window.nvCloseClienteDropdown=function(){
     };
     // ═══ SUPABASE LIVE SYNC — actualización en tiempo real cada 3s ═══
     function nvMapDbToOrder(row){
-      return {
+      var _r={
         id:row.id, internalId:row.internal_id, createdAt:row.created_at,
         dentist:row.dentist, clienteId:row.cliente_id,
         patient:row.patient, patientAge:row.patient_age,
@@ -4620,6 +4621,21 @@ window.nvCloseClienteDropdown=function(){
         warrantyArea:row.warranty_area, originalCaseId:row.original_case_id,
         isArchived:!!row.is_archived, archivedAt:row.archived_at
       };
+      return migrate(_r);
+    }
+
+    async function nvLoadFromSupabase(){
+      try{
+        var res=await _sb.from('casos').select('*').order('created_at',{ascending:false});
+        if(res.error||!res.data)return;
+        if(res.data.length>0){
+          orders=res.data.map(function(r){return migrate(nvMapDbToOrder(r));});
+          try{var ls=JSON.parse(localStorage.getItem('nv_v6')||'{}');if(ls.counter)counter=ls.counter;if(ls.invCounter)invCounter=ls.invCounter;}catch(e){}
+          try{localStorage.setItem('nv_v6',JSON.stringify({orders:orders,counter:counter,cur:cur,invCounter:invCounter}));}catch(e){}
+          _nvLastSyncHash=res.data.map(function(r){return r.id+'|'+(r.updated_at||'');}).join(',');
+        }
+        if(typeof nvSetSyncBadge==='function')nvSetSyncBadge(true);
+      }catch(e){console.warn('nvLoadFromSupabase:',e);if(typeof nvSetSyncBadge==='function')nvSetSyncBadge(false);}
     }
 
     var _nvLiveSyncInterval=null, _nvLastSyncHash='', _nvSyncBusy=false;
@@ -4642,7 +4658,7 @@ window.nvCloseClienteDropdown=function(){
         var hash=res.data.map(function(r){return r.id+'|'+(r.updated_at||'');}).join(',');
         if(hash===_nvLastSyncHash){_nvSyncBusy=false;return;}
         _nvLastSyncHash=hash;
-        orders=res.data.map(nvMapDbToOrder);
+        orders=res.data.map(function(r){return migrate(nvMapDbToOrder(r));});
         // Guardar en localStorage sin disparar otro sync
         try{localStorage.setItem('nv_v6',JSON.stringify({orders:orders,counter:counter,cur:cur,invCounter:invCounter}));}catch(e){}
         // Re-renderizar vista activa
