@@ -3817,8 +3817,6 @@ function checkSession(){
   // ── LOGIN BYPASS (dev) ── quitar cuando se reactive auth
   const users=JSON.parse(localStorage.getItem('nv_users')||'[]');
   const adminUser=users.find(u=>u.role==='admin')||{email:'admin@naturalveneers.com',name:'Administrador',role:'admin',permissions:{ver:['operativo','finanzas','productividad','dashboard','configuracion'],modificar:['casos','precios','estados'],eliminar:['casos']}};
-  currentUser=adminUser;showApp();return;
-  // ── FIN BYPASS ──
   const sess=localStorage.getItem('nv_session');
   if(sess){try{const s=JSON.parse(sess);const u=users.find(x=>x.email===s.email);if(u){currentUser=u;showApp();return;}}catch(e){}}
   showLoginScreen();
@@ -3844,6 +3842,16 @@ async function loginUser(){
   const errEl=document.getElementById('lgErr');
   errEl.style.display='none';
   if(!email||!pw){errEl.textContent='Completa todos los campos.';errEl.style.display='block';return;}
+  // 1. Supabase Auth (primario - DELETE solo admin)
+  if(_sb){try{
+    const {data,error}=await _sb.auth.signInWithPassword({email,password:pw});
+    if(!error&&data?.user){
+      const users=JSON.parse(localStorage.getItem('nv_users')||'[]');
+      const u=users.find(x=>x.email===email);
+      if(u){currentUser=u;localStorage.setItem('nv_session',JSON.stringify({email:u.email}));showApp();return;}
+    }
+  }catch(e){}}
+  // 2. Fallback: hash local (migración progresiva)
   const hash=await hashPw(pw);
   const users=JSON.parse(localStorage.getItem('nv_users')||'[]');
   const u=users.find(x=>x.email===email&&x.passwordHash===hash);
