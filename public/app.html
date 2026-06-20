@@ -4446,7 +4446,7 @@ window.addEventListener("DOMContentLoaded",function(){
     if(res.data&&res.data.session&&res.data.session.user){
       var u=res.data.session.user;
       var meta=u.user_metadata||{};
-      var nvUs=JSON.parse(localStorage.getItem('nv_users')||'[]');var nvU=nvUs.find(function(x){return x.email===res.data.user.email;});var rol=meta.rol||(nvU?nvU.role:null)||'auxiliar';if(nvU){currentUser=nvU;}
+      var nvUs=JSON.parse(localStorage.getItem('nv_users')||'[]');var nvU=nvUs.find(function(x){return x.email===res.data.session.user.email;});var rol=meta.rol||(nvU?nvU.role:null)||'auxiliar';if(nvU){currentUser=nvU;}
       var cfg=NV_ROLE_CFG[rol]||NV_ROLE_CFG.auxiliar;
       var sess={id:u.id,name:meta.nombre||u.email,role:rol,tabs:cfg.tabs,canDelete:cfg.canDelete,readOnly:cfg.readOnly,ts:Date.now()};
       nvApplySession(sess);
