@@ -3826,7 +3826,7 @@ function showApp(){
   // Restore saved theme
   const savedTheme=localStorage.getItem('nv_theme');
   applyTheme(savedTheme==='light');
-  applyRoleUI();setCur(cur);renderAll();
+  applyRoleUI();document.body.className='role-'+(currentUser?.role||'auxiliar');setCur(cur);renderAll();
   var _lf=typeof nvLoadFromSupabase==='function'?nvLoadFromSupabase:window.nvLoadFromSupabase;
   if(typeof _lf==='function')_lf().then(function(){renderAll();if(typeof window.nvStartLiveSync==='function')window.nvStartLiveSync();}).catch(function(){});
 }
