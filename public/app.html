@@ -4401,7 +4401,7 @@ function nvLogin(){
   });
 }
 function nvApplySession(sess){
-  document.getElementById('nv-login').classList.add('hidden');
+  document.getElementById('nv-login').style.display='none';
   document.body.className='role-'+sess.role;
   document.querySelectorAll('.mtab').forEach(function(t){t.style.display=sess.tabs.indexOf(t.id)>=0?'':'none';});
   var un=document.getElementById('hUserName');if(un)un.textContent=sess.name;
