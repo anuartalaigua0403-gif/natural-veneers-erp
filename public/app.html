@@ -1648,6 +1648,7 @@ body.role-contable button[onclick*="deleteOrder"]{display:none!important;}
         <div class="fg"><label class="flbl">Urgencia</label>
           <select class="fs" id="nUrg"><option value="normal">Normal (2-3 días)</option><option value="media">Media</option><option value="alta">Alta ⚠</option></select>
         </div>
+        <div class="fg"><label class="flbl">Fecha recepción</label><input class="fi" id="nRecDate" type="date"></div>
         <div class="fg"><label class="flbl">Fecha de entrega</label><input class="fi" id="nDel" type="date"></div>
       </div>
       <div class="frow">
@@ -1778,7 +1779,10 @@ body.role-contable button[onclick*="deleteOrder"]{display:none!important;}
     <div class="mb" id="detBody"></div>
     <div class="mfooter" id="detFooter" style="justify-content:space-between;">
       <div id="detAdminBtns"></div>
-      <button class="btn btn-g" onclick="closeDet()">Cerrar</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn" id="detEditBtn" style="background:var(--sur3);border:1px solid var(--bdr);color:var(--tx);" onclick="editCase(window._detOpenId)">&#9998; Editar</button>
+        <button class="btn btn-g" onclick="closeDet()">Cerrar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2161,7 +2165,7 @@ function load(){
   }catch(e){orders=JSON.parse(JSON.stringify(SAMPLE)).map(migrate);}
   try{const p=localStorage.getItem('nv_prices');if(p)customPrices=JSON.parse(p);}catch(e){}
 }
-function save(){localStorage.setItem('nv_v6',JSON.stringify({orders,counter,cur,invCounter}));if(typeof nvSyncCasosSupabase==='function')nvSyncCasosSupabase();}
+function save(){localStorage.setItem('nv_v6',JSON.stringify({orders,counter,cur,invCounter}));_nvLocalChanges=true;var _sf=typeof nvSyncCasosSupabase==='function'?nvSyncCasosSupabase:window.nvSyncCasosSupabase;if(typeof _sf==='function')_sf();}
 function savePrices(){localStorage.setItem('nv_prices',JSON.stringify(customPrices));}
 
 
@@ -2243,7 +2247,11 @@ function renderActive(){
 }
 
 // ════ NEW CASE FORM ════
+var _editCaseId=null;
 function openNew(){
+  _editCaseId=null;
+  const _mt=document.querySelector('#newMov .mtitle');if(_mt)_mt.textContent='Registrar Nuevo Caso';
+  const _sbtn=document.querySelector('#newMov .btn.btn-p');if(_sbtn&&_sbtn.getAttribute('onclick')==='updateCase()')_sbtn.setAttribute('onclick','createCase()');
   formItems=[];
   ['nIntId','nDent','nPat','nAge','nPhone','nCity','nColor','nColorS','nAdit','nAdv','nOrigId'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   ['nNotes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
@@ -2258,12 +2266,15 @@ function openNew(){
   document.querySelectorAll('input[name="nImp"]').forEach(r=>r.checked=false);
   const del=document.getElementById('nDel');
   if(del){const d=new Date();d.setDate(d.getDate()+3);del.value=d.toISOString().slice(0,10);}
+  const recD=document.getElementById('nRecDate');if(recD)recD.value=new Date().toISOString().slice(0,10);
   renderItemsTable();
   document.getElementById('newMov').classList.add('on');
 }
 function closeNew(e){
-  if(!e||e.target===document.getElementById('newMov'))
+  if(!e||e.target===document.getElementById('newMov')){
     document.getElementById('newMov').classList.remove('on');
+    if(_editCaseId){const _mt=document.querySelector('#newMov .mtitle');if(_mt)_mt.textContent='Registrar Nuevo Caso';const _sbtn=document.querySelector('#newMov .btn.btn-p');if(_sbtn)_sbtn.setAttribute('onclick','createCase()');_editCaseId=null;}
+  }
 }
 function onCurChange(){
   const c=document.getElementById('nCur')?.value||'COP';
@@ -2352,13 +2363,13 @@ function createCase(){
     warrantyReason:document.getElementById('nWarrReason')?.value||'',
     warrantyArea:document.getElementById('nWarrArea')?.value||'',
     originalCaseId:document.getElementById('nOrigId')?.value.trim()||null,
-    history:[{stage:'received',at:new Date().toISOString(),by:currentUser?.name||'Sistema'}],
+    history:[{stage:'received',at:(()=>{const rv=document.getElementById('nRecDate')?.value;return rv?new Date(rv+'T12:00:00').toISOString():new Date().toISOString();})(),by:currentUser?.name||'Sistema'}],
     shipping:{carrier:'',trackingNumber:'',dispatchDate:null},
     invoiced:false,invoiceNumber:null,invoiceDate:null,
     fullyPaid:false,paidDate:null,
     insumos:[],comments:[],
     isArchived:false,archivedAt:null,completedAt:null,lifecycleStatus:'active',
-    createdAt:new Date().toISOString(),
+    createdAt:(()=>{const rv=document.getElementById('nRecDate')?.value;return rv?new Date(rv+'T12:00:00').toISOString():new Date().toISOString();})(),
   };
   orders.unshift(newOrder);
   counter++;
@@ -3591,6 +3602,7 @@ function openDet(id){
   if(!o)return;
   document.getElementById('detId').textContent=o.id+(o.internalId?' · '+o.internalId:'');
   document.getElementById('detTitle').textContent=o.dentist+' — '+caseMain(o);
+  window._detOpenId=id;
   const adminBtns=document.getElementById('detAdminBtns');
   if(adminBtns)adminBtns.innerHTML=canDelete('casos')?`<button class="btn-danger" onclick="deleteCase('${o.id}')">&#128465; Eliminar caso</button>`:'';
   const stg=STAGES.find(s=>s.id===o.status)||{lbl:o.status,col:'#6b7280'};
@@ -3805,8 +3817,6 @@ function checkSession(){
   // ── LOGIN BYPASS (dev) ── quitar cuando se reactive auth
   const users=JSON.parse(localStorage.getItem('nv_users')||'[]');
   const adminUser=users.find(u=>u.role==='admin')||{email:'admin@naturalveneers.com',name:'Administrador',role:'admin',permissions:{ver:['operativo','finanzas','productividad','dashboard','configuracion'],modificar:['casos','precios','estados'],eliminar:['casos']}};
-  currentUser=adminUser;showApp();return;
-  // ── FIN BYPASS ──
   const sess=localStorage.getItem('nv_session');
   if(sess){try{const s=JSON.parse(sess);const u=users.find(x=>x.email===s.email);if(u){currentUser=u;showApp();return;}}catch(e){}}
   showLoginScreen();
@@ -3816,8 +3826,9 @@ function showApp(){
   // Restore saved theme
   const savedTheme=localStorage.getItem('nv_theme');
   applyTheme(savedTheme==='light');
-  applyRoleUI();setCur(cur);renderAll();
-  if(typeof nvLoadFromSupabase==='function')nvLoadFromSupabase().then(function(){renderAll();}).catch(function(){});
+  applyRoleUI();document.body.className='role-'+(currentUser?.role||'auxiliar');setCur(cur);renderAll();
+  var _lf=typeof nvLoadFromSupabase==='function'?nvLoadFromSupabase:window.nvLoadFromSupabase;
+  if(typeof _lf==='function')_lf().then(function(){renderAll();if(typeof window.nvStartLiveSync==='function')window.nvStartLiveSync();}).catch(function(){});
 }
 function showLoginScreen(){document.getElementById('loginScreen').style.display='flex';
   document.getElementById('lgEmail').value='';
@@ -3831,6 +3842,16 @@ async function loginUser(){
   const errEl=document.getElementById('lgErr');
   errEl.style.display='none';
   if(!email||!pw){errEl.textContent='Completa todos los campos.';errEl.style.display='block';return;}
+  // 1. Supabase Auth (primario - DELETE solo admin)
+  if(_sb){try{
+    const {data,error}=await _sb.auth.signInWithPassword({email,password:pw});
+    if(!error&&data?.user){
+      const users=JSON.parse(localStorage.getItem('nv_users')||'[]');
+      const u=users.find(x=>x.email===email);
+      if(u){currentUser=u;localStorage.setItem('nv_session',JSON.stringify({email:u.email}));showApp();return;}
+    }
+  }catch(e){}}
+  // 2. Fallback: hash local (migración progresiva)
   const hash=await hashPw(pw);
   const users=JSON.parse(localStorage.getItem('nv_users')||'[]');
   const u=users.find(x=>x.email===email&&x.passwordHash===hash);
@@ -3871,6 +3892,7 @@ function deleteCase(id){
   if(!canDelete('casos')){alert('No tienes permiso para eliminar casos.');return;}
   if(!confirm('Eliminar este caso permanentemente? Esta accion no se puede deshacer.'))return;
   orders=orders.filter(o=>o.id!==id);save();closeDet();renderAll();
+  if(typeof _sb!=='undefined'&&_sb)_sb.from('casos').delete().eq('id',id).then(function(r){if(r.error)console.error('Error al eliminar caso en Supabase:',r.error);});
 }
 
 // ════ NOTIFICATIONS ════════════════════════════════════════════════════
@@ -4025,6 +4047,94 @@ async function saveNewUser(){
 }
 
 // ════ STAGE TRANSITION ═══════════════════════════════════════════════════════
+
+function editCase(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  _editCaseId=id;
+  closeDet();
+  formItems=(o.items||[]).map(it=>Object.assign({},it));
+  if(!formItems.length)formItems=[{product:'',units:1,unitPrice:0,discount:0,discountType:'%'}];
+  const set=(elId,val)=>{const e=document.getElementById(elId);if(e)e.value=val!=null?val:'';};
+  set('nIntId',o.internalId||'');
+  set('nDent',o.dentist||'');
+  set('nDentSearch',o.dentist||'');
+  set('nClienteId',o.clienteId||'');
+  set('nPat',o.patient||'');
+  set('nAge',o.patientAge||'');
+  set('nPhone',o.phone||'');
+  set('nCity',o.city||'');
+  document.getElementById('nCountry').value=o.country||'Colombia';
+  document.getElementById('nCur').value=o.currency||'COP';
+  document.getElementById('nUrg').value=o.urgency||'normal';
+  set('nDel',o.deliveryDate||'');
+  set('nRecDate',o.createdAt?o.createdAt.slice(0,10):new Date().toISOString().slice(0,10));
+  document.getElementById('nRec').value=(o.responsibles&&o.responsibles.received)||'Yeiner';
+  set('nColor',o.colorSolicitado||'');
+  set('nColorS',o.colorSustrato||'');
+  set('nAdit',o.aditamentos||'');
+  set('nNotes',o.notes||'');
+  set('nAdv',o.advanceAmount||'');
+  document.getElementById('nAdvCur').value=o.advanceCurrency||o.currency||'COP';
+  document.getElementById('nPay').value=o.advanceMethod||'';
+  set('nWarrReason',o.warrantyReason||'');
+  set('nWarrArea',o.warrantyArea||'');
+  set('nOrigId',o.originalCaseId||'');
+  const setChk=(elId,val)=>{const e=document.getElementById(elId);if(e)e.checked=!!val;};
+  setChk('nModS',o.modelos&&o.modelos.sup);setChk('nModI',o.modelos&&o.modelos.inf);
+  setChk('nCubS',o.cubeta&&o.cubeta.sup);setChk('nCubI',o.cubeta&&o.cubeta.inf);
+  setChk('nRegM',o.registroMordida);setChk('nFotos',o.fotos);
+  setChk('nWarr',o.isWarranty);
+  document.getElementById('warrFields').style.display=o.isWarranty?'block':'none';
+  if(o.impresion){const r=document.querySelector('input[name="nImp"][value="'+o.impresion+'"]');if(r)r.checked=true;}
+  renderItemsTable();
+  const title=document.querySelector('#newMov .mtitle');if(title)title.textContent='Editar Caso — '+o.id;
+  const sbtn=document.querySelector('#newMov .btn.btn-p');if(sbtn)sbtn.setAttribute('onclick','updateCase()');
+  document.getElementById('newMov').classList.add('on');
+}
+
+function updateCase(){
+  if(!_editCaseId)return;
+  const o=orders.find(x=>x.id===_editCaseId);if(!o)return;
+  const dent=(document.getElementById('nDent')?.value||'').trim();
+  const pat=(document.getElementById('nPat')?.value||'').trim();
+  if(!dent||!pat){alert('Dentista y paciente son obligatorios.');return;}
+  const c=document.getElementById('nCur')?.value||'COP';
+  const imp=document.querySelector('input[name="nImp"]:checked')?.value||'';
+  const recDateVal=document.getElementById('nRecDate')?.value;
+  o.internalId=document.getElementById('nIntId')?.value.trim()||o.internalId;
+  o.dentist=dent;o.patient=pat;
+  o.patientAge=document.getElementById('nAge')?.value||'';
+  o.phone=document.getElementById('nPhone')?.value.trim()||'';
+  o.city=document.getElementById('nCity')?.value.trim()||'';
+  o.country=document.getElementById('nCountry')?.value||'Colombia';
+  o.currency=c;o.urgency=document.getElementById('nUrg')?.value||'normal';
+  o.deliveryDate=document.getElementById('nDel')?.value||null;
+  o.colorSolicitado=document.getElementById('nColor')?.value.trim()||'';
+  o.colorSustrato=document.getElementById('nColorS')?.value.trim()||'';
+  o.aditamentos=document.getElementById('nAdit')?.value.trim()||'';
+  o.impresion=imp;
+  o.modelos={sup:!!document.getElementById('nModS')?.checked,inf:!!document.getElementById('nModI')?.checked};
+  o.cubeta={sup:!!document.getElementById('nCubS')?.checked,inf:!!document.getElementById('nCubI')?.checked};
+  o.registroMordida=!!document.getElementById('nRegM')?.checked;
+  o.fotos=!!document.getElementById('nFotos')?.checked;
+  o.notes=document.getElementById('nNotes')?.value.trim()||'';
+  o.isWarranty=!!document.getElementById('nWarr')?.checked;
+  o.warrantyReason=document.getElementById('nWarrReason')?.value||'';
+  o.warrantyArea=document.getElementById('nWarrArea')?.value||'';
+  o.originalCaseId=document.getElementById('nOrigId')?.value.trim()||null;
+  if(recDateVal)o.createdAt=new Date(recDateVal+'T12:00:00').toISOString();
+  o.items=formItems.filter(it=>it.product).map(it=>Object.assign({},it,{unitPrice:it.unitPrice||getPrice(it.product,c)||0}));
+  if(!o.responsibles)o.responsibles={};
+  o.responsibles.received=document.getElementById('nRec')?.value||o.responsibles.received;
+  if(!o.history)o.history=[];
+  o.history.push({stage:'edit',at:new Date().toISOString(),by:(currentUser&&currentUser.name)||'Sistema',note:'Caso editado'});
+  o.updatedAt=new Date().toISOString();
+  _editCaseId=null;
+  save();
+  closeNew();
+  renderAll();
+}
+
 let _smovId=null,_smovDir=null;
 function openStageMove(id,dir){
   _smovId=id;_smovDir=dir;
@@ -4282,7 +4392,7 @@ function nvLogin(){
   _sb.auth.signInWithPassword({email:email,password:pass}).then(function(res){
     if(res.error){err.textContent='Correo o contrasena incorrectos.';err.classList.add('on');return;}
     var meta=res.data.user.user_metadata||{};
-    var rol=meta.rol||'auxiliar';
+    var nvUs=JSON.parse(localStorage.getItem('nv_users')||'[]');var nvU=nvUs.find(function(x){return x.email===res.data.user.email;});var rol=meta.rol||(nvU?nvU.role:null)||'auxiliar';if(nvU){currentUser=nvU;}
     var cfg=NV_ROLE_CFG[rol]||NV_ROLE_CFG.auxiliar;
     var sess={id:res.data.user.id,name:meta.nombre||email,role:rol,tabs:cfg.tabs,canDelete:cfg.canDelete,readOnly:cfg.readOnly,ts:Date.now()};
     if(rem){localStorage.setItem('nv_session',JSON.stringify(sess));}else{sessionStorage.setItem('nv_session',JSON.stringify(sess));}
@@ -4291,7 +4401,7 @@ function nvLogin(){
   });
 }
 function nvApplySession(sess){
-  document.getElementById('nv-login').classList.add('hidden');
+  document.getElementById('nv-login').style.display='none';
   document.body.className='role-'+sess.role;
   document.querySelectorAll('.mtab').forEach(function(t){t.style.display=sess.tabs.indexOf(t.id)>=0?'':'none';});
   var un=document.getElementById('hUserName');if(un)un.textContent=sess.name;
@@ -4323,13 +4433,8 @@ function nvPullFromSupabase(){
     if(typeof renderTable==='function')renderTable();
   });
 }
-function nvPushToSupabase(){
-  if(!_sb)return;
-  var casos=localStorage.getItem('nv_v6')||'[]';
-  var emps=localStorage.getItem('nv_users')||'[]';
-  _sb.from('sync_store').upsert([{key:'nv_v6',value:casos,updated_at:new Date().toISOString()},{key:'nv_users',value:emps,updated_at:new Date().toISOString()}],{onConflict:'key'}).then(function(){});
-}
-setInterval(nvPushToSupabase,3*60*1000);
+function nvPushToSupabase(){/* legacy sync_store - migrado a nvSyncCasosSupabase en casos tabla */}
+setInterval(function(){var _sf=typeof nvSyncCasosSupabase==="function"?nvSyncCasosSupabase:window.nvSyncCasosSupabase;if(typeof _sf==="function")_sf();},5*60*1000);
 window.addEventListener('beforeunload',nvPushToSupabase);
 window.addEventListener("DOMContentLoaded",function(){
   window.showLoginScreen=function(){nvShowLogin();};
@@ -4341,7 +4446,7 @@ window.addEventListener("DOMContentLoaded",function(){
     if(res.data&&res.data.session&&res.data.session.user){
       var u=res.data.session.user;
       var meta=u.user_metadata||{};
-      var rol=meta.rol||'auxiliar';
+      var nvUs=JSON.parse(localStorage.getItem('nv_users')||'[]');var nvU=nvUs.find(function(x){return x.email===res.data.session.user.email;});var rol=meta.rol||(nvU?nvU.role:null)||'auxiliar';if(nvU){currentUser=nvU;}
       var cfg=NV_ROLE_CFG[rol]||NV_ROLE_CFG.auxiliar;
       var sess={id:u.id,name:meta.nombre||u.email,role:rol,tabs:cfg.tabs,canDelete:cfg.canDelete,readOnly:cfg.readOnly,ts:Date.now()};
       nvApplySession(sess);
@@ -4540,9 +4645,14 @@ window.nvCloseClienteDropdown=function(){
         try{
           if(!orders||!orders.length)return;
           var rows=orders.map(function(o){var r=nvMapCasoToDb(o);r.order_json=o;return r;});
-          await _sb.from('casos').upsert(rows,{onConflict:'id'});
+          var res=await _sb.from('casos').upsert(rows,{onConflict:'id'});
+          if(!res.error){
+            var fresh=await _sb.from('casos').select('id,updated_at').order('created_at',{ascending:false});
+            if(fresh.data)_nvLastSyncHash=fresh.data.map(function(r){return r.id+'|'+(r.updated_at||'');}).join(',');
+          }
         }catch(e){console.warn('nvSyncCasos:',e);}
-      },2000);
+        _nvLocalChanges=false;
+      },800);
     }
     window.nvExportCasosExcel=async function(){
       var btn=event&&event.target;if(btn){btn.disabled=true;btn.textContent='Cargando...';}
@@ -4639,16 +4749,26 @@ window.nvCloseClienteDropdown=function(){
       }catch(e){console.warn('nvLoadFromSupabase:',e);if(typeof nvSetSyncBadge==='function')nvSetSyncBadge(false);}
     }
 
-    var _nvLiveSyncInterval=null, _nvLastSyncHash='', _nvSyncBusy=false;
+    var _nvLiveSyncInterval=null, _nvLastSyncHash='', _nvSyncBusy=false, _nvLocalChanges=false;
 
     function nvStartLiveSync(){
       if(_nvLiveSyncInterval)clearInterval(_nvLiveSyncInterval);
       nvLiveSyncTick();
       _nvLiveSyncInterval=setInterval(nvLiveSyncTick,3000);
+      // Realtime: sync instantáneo entre usuarios
+      try{
+        if(_sb&&typeof _sb.channel==='function'){
+          _sb.channel('casos-rt').on('postgres_changes',{event:'*',schema:'public',table:'casos'},function(){
+            if(!_nvLocalChanges&&!_nvSyncBusy)nvLiveSyncTick();
+          }).subscribe(function(status){
+            if(typeof nvSetSyncBadge==='function')nvSetSyncBadge(status==='SUBSCRIBED'?'ok':'connecting');
+          });
+        }
+      }catch(e){console.warn('Realtime:',e);}
     }
 
     async function nvLiveSyncTick(){
-      if(_nvSyncBusy)return;
+      if(_nvSyncBusy||_nvLocalChanges)return;
       // No sincronizar si hay un modal abierto (usuario editando)
       var modals=['#nModal','#nvNuevoClienteModal'];
       for(var m of modals){var el=document.querySelector(m);if(el&&el.style.display==='flex')return;}
@@ -4678,6 +4798,11 @@ window.nvCloseClienteDropdown=function(){
         :'<span style="color:#ef4444;font-weight:600;">● Sin conexión</span>';
     }
 
+    // Exponer al scope global para que save() y showApp() puedan acceder
+    window.nvSyncCasosSupabase=nvSyncCasosSupabase;
+    window.nvLoadFromSupabase=nvLoadFromSupabase;
+    window.nvStartLiveSync=nvStartLiveSync;
+    window.nvSetSyncBadge=nvSetSyncBadge;
     // Iniciar live sync al cargar
     nvStartLiveSync();
 
