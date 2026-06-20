@@ -3892,6 +3892,7 @@ function deleteCase(id){
   if(!canDelete('casos')){alert('No tienes permiso para eliminar casos.');return;}
   if(!confirm('Eliminar este caso permanentemente? Esta accion no se puede deshacer.'))return;
   orders=orders.filter(o=>o.id!==id);save();closeDet();renderAll();
+  if(typeof _sb!=='undefined'&&_sb)_sb.from('casos').delete().eq('id',id).then(function(r){if(r.error)console.error('Error al eliminar caso en Supabase:',r.error);});
 }
 
 // ════ NOTIFICATIONS ════════════════════════════════════════════════════
@@ -4445,7 +4446,7 @@ window.addEventListener("DOMContentLoaded",function(){
     if(res.data&&res.data.session&&res.data.session.user){
       var u=res.data.session.user;
       var meta=u.user_metadata||{};
-      var nvUs=JSON.parse(localStorage.getItem('nv_users')||'[]');var nvU=nvUs.find(function(x){return x.email===u.email;});var rol=meta.rol||(nvU?nvU.role:null)||'auxiliar';if(nvU){currentUser=nvU;}
+      var nvUs=JSON.parse(localStorage.getItem('nv_users')||'[]');var nvU=nvUs.find(function(x){return x.email===res.data.user.email;});var rol=meta.rol||(nvU?nvU.role:null)||'auxiliar';if(nvU){currentUser=nvU;}
       var cfg=NV_ROLE_CFG[rol]||NV_ROLE_CFG.auxiliar;
       var sess={id:u.id,name:meta.nombre||u.email,role:rol,tabs:cfg.tabs,canDelete:cfg.canDelete,readOnly:cfg.readOnly,ts:Date.now()};
       nvApplySession(sess);
