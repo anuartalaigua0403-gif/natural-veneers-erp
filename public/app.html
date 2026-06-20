@@ -4392,7 +4392,7 @@ function nvLogin(){
   _sb.auth.signInWithPassword({email:email,password:pass}).then(function(res){
     if(res.error){err.textContent='Correo o contrasena incorrectos.';err.classList.add('on');return;}
     var meta=res.data.user.user_metadata||{};
-    var nvUs=JSON.parse(localStorage.getItem('nv_users')||'[]');var nvU=nvUs.find(function(x){return x.email===u.email;});var rol=meta.rol||(nvU?nvU.role:null)||'auxiliar';if(nvU){currentUser=nvU;}
+    var nvUs=JSON.parse(localStorage.getItem('nv_users')||'[]');var nvU=nvUs.find(function(x){return x.email===res.data.user.email;});var rol=meta.rol||(nvU?nvU.role:null)||'auxiliar';if(nvU){currentUser=nvU;}
     var cfg=NV_ROLE_CFG[rol]||NV_ROLE_CFG.auxiliar;
     var sess={id:res.data.user.id,name:meta.nombre||email,role:rol,tabs:cfg.tabs,canDelete:cfg.canDelete,readOnly:cfg.readOnly,ts:Date.now()};
     if(rem){localStorage.setItem('nv_session',JSON.stringify(sess));}else{sessionStorage.setItem('nv_session',JSON.stringify(sess));}
