@@ -3135,9 +3135,9 @@ function renderDespachos(){
   let list;
   if(despFilter==='pending') list=orders.filter(o=>['qc','dispatch'].includes(o.status));
   else if(despFilter==='dispatched') list=orders.filter(o=>o.status==='dispatched'||o.status==='delivered');
-  else list=orders.filter(o=>['qc','dispatch','dispatched','delivered'].includes(o.status));
+  else list=orders.filter(o=>['qc','dispatch'].includes(o.status)&&!TERM.includes(o.status));
   const title=document.getElementById('despTitle');
-  if(title) title.textContent=despFilter==='pending'?'Casos por despachar':despFilter==='dispatched'?'Casos despachados':'Todos los despachos';
+  if(title) title.textContent=despFilter==='pending'?'Casos por despachar':despFilter==='dispatched'?'Casos despachados':'Por despachar (todos)';
   const body=document.getElementById('despBody');if(!body)return;
   body.innerHTML=list.map(o=>{
     const sh=o.shipping||{};const s=STAGES.find(s=>s.id===o.status);
