@@ -1738,10 +1738,21 @@ body.role-contable button[onclick*="deleteOrder"]{display:none!important;}
 
       <!-- WARRANTY -->
       <div class="fg full" style="margin-bottom:9px;">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--tx2);">
-          <input type="checkbox" id="nWarr" onchange="toggleWarranty()"> 🔁 Este caso es repetición o garantía
-        </label>
-        <div id="warrFields" style="display:none;margin-top:9px;padding:10px;background:rgba(236,72,153,.08);border-radius:8px;border:1px solid rgba(236,72,153,.2);">
+        <div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.15);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:8px;">Tipo de caso</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="nCaseType" value="normal" id="nCtNormal" onchange="onCaseTypeChange()" checked> Normal</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="nCaseType" value="repeticion" id="nCtRep" onchange="onCaseTypeChange()"> 🔄 Repetición</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="nCaseType" value="garantia" id="nCtWarr" onchange="onCaseTypeChange()"> 🛡️ Garantía</label>
+          </div>
+          <div id="nCostoSection" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid rgba(99,102,241,.2);">
+            <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:6px;">¿Tiene costo?</div>
+            <div style="display:flex;gap:14px;">
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="nCosto" value="con" id="nCostoCon" onchange="onCaseCostoChange()" checked> 💰 Con costo</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="nCosto" value="sin" id="nCostoSin" onchange="onCaseCostoChange()"> 🄓 Sin costo</label>
+            </div>
+          </div>
+          id="warrFields" style="display:none;margin-top:9px;padding:10px;background:rgba(236,72,153,.08);border-radius:8px;border:1px solid rgba(236,72,153,.2);">
           <div class="frow" style="margin-bottom:0;">
             <div class="fg"><label class="flbl">ID del caso original</label><input class="fi" id="nOrigId" placeholder="DL-2026-0001"></div>
             <div class="fg"><label class="flbl">Área responsable</label>
@@ -1758,7 +1769,9 @@ body.role-contable button[onclick*="deleteOrder"]{display:none!important;}
             </select>
           </div>
         </div>
+        </div>
       </div>
+
 
       <div class="fg full"><label class="flbl">Notas / Indicaciones</label><textarea class="fta" id="nNotes" placeholder="Instrucciones especiales..."></textarea></div>
     </div>
@@ -1934,7 +1947,7 @@ const SAMPLE=[
    advanceAmount:450000,advanceMethod:'Bancolombia',advanceDate:'2026-06-03T08:30:00',
    responsibles:{received:'Sheyla',digital:'Yeiner',printing:'Cesar',injection:'Eliecer',ceramic:'Alexander'},
    shipping:{carrier:'',trackingNumber:'',dispatchDate:null},
-   isWarranty:false,warrantyReason:'',warrantyArea:'',originalCaseId:null,
+   caseType:(document.querySelector('input[name="nCaseType"]:checked')||{value:'normal'}).value,sinCosto:(document.getElementById('nCostoSin')||{}).checked||false,isWarranty:(document.querySelector('input[name="nCaseType"]:checked')||{value:''}).value==='garantia',warrantyReason:'',warrantyArea:'',originalCaseId:null,
    notes:'Color A2, verificar oclusión.',
    comments:[{author:'Sheyla',dept:'Admin',time:'2026-06-03T08:05:00',text:'Caso recibido. Referencias completas.'}],
    history:[{stage:'received',at:'2026-06-03T08:00:00',by:'Sheyla'},{stage:'digital',at:'2026-06-03T10:00:00',by:'Yeiner'},{stage:'printing',at:'2026-06-03T15:00:00',by:'Cesar'},{stage:'injection',at:'2026-06-04T09:00:00',by:'Eliecer'},{stage:'ceramic',at:'2026-06-05T09:00:00',by:'Alexander'}]
@@ -2252,7 +2265,7 @@ function openNew(){
   _editCaseId=null;
   const _mt=document.querySelector('#newMov .mtitle');if(_mt)_mt.textContent='Registrar Nuevo Caso';
   const _sbtn=document.querySelector('#newMov .btn.btn-p');if(_sbtn&&_sbtn.getAttribute('onclick')==='updateCase()')_sbtn.setAttribute('onclick','createCase()');
-  formItems=[];
+  formItems=[];var nCtNorm=document.getElementById('nCtNormal');if(nCtNorm)nCtNorm.checked=true;onCaseTypeChange();var nCostoCon=document.getElementById('nCostoCon');if(nCostoCon)nCostoCon.checked=true;
   ['nIntId','nDent','nPat','nAge','nPhone','nCity','nColor','nColorS','nAdit','nAdv','nOrigId'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   ['nNotes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('nCountry').value='Colombia';
@@ -2280,10 +2293,8 @@ function onCurChange(){
   const c=document.getElementById('nCur')?.value||'COP';
   calcFormTotal();
 }
-function toggleWarranty(){
-  const wf=document.getElementById('warrFields');
-  if(wf)wf.style.display=document.getElementById('nWarr')?.checked?'block':'none';
-}
+function onCaseTypeChange(){var v=(document.querySelector('input[name="nCaseType"]:checked')||{}).value||'normal';var cs=document.getElementById('nCostoSection');var wf=document.getElementById('warrFields');if(cs)cs.style.display=(v==='repeticion'||v==='garantia')?'block':'none';if(wf)wf.style.display=(v==='garantia')?'block':'none';}function onCaseCostoChange(){var sinEl=document.getElementById('nCostoSin');var isSin=sinEl&&sinEl.checked;var tb=document.getElementById('itemsBody');if(tb){var inputs=tb.querySelectorAll('input[id^="pp_"]');inputs.forEach(function(inp){inp.style.opacity=isSin?'0.4':'1';inp.disabled=isSin;});}}
+function toggleWarranty(){onCaseTypeChange();}
 function renderItemsTable(){
   const tb=document.getElementById('itemsBody');if(!tb)return;
   if(!formItems.length){
@@ -2448,7 +2459,7 @@ function renderCotizaciones(){
     const paymentsHtml=(o.additionalPayments||[]).map(p=>`<div class="pay-hist">+ ${fmtP(p.amount,p.currency||o.currency)} · ${p.method}${p.currency&&p.currency!==o.currency?` <span style="font-size:9px;background:#e0f2fe;color:#0369a1;border-radius:4px;padding:1px 4px;font-weight:700;">${p.currency}</span>`:''}</div>`).join('');
     return`<tr>
       <td><span class="mono">${o.id}</span><div style="font-size:10px;color:var(--tx3);">${fmtD(o.createdAt)}</div></td>
-      <td><div style="font-weight:600;font-size:12px;">${o.dentist}</div><div style="font-size:10px;color:var(--tx2);">${o.patient}${o.city?' · '+o.city:''}</div></td>
+      <td><div style="font-weight:600;font-size:12px;">${o.caseType&&o.caseType!=='normal'?'<span style="display:inline-block;background:'+(o.caseType==='garantia'?'#7c3aed':'#0369a1')+';color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-right:4px;">'+(o.sinCosto?'🆓 ':'')+( o.caseType==='garantia'?'GARANTÍA':'REPETICIÓN')+'</span>':''  }${o.dentist}</div><div style="font-size:10px;color:var(--tx2);">${o.patient}${o.city?' · '+o.city:''}</div></td>
       <td style="font-size:11px;max-width:130px;">${caseMain(o)}<div style="font-size:10px;color:var(--tx2);">${(o.items||[]).reduce((a,i)=>a+i.units,0)} uds.</div></td>
       <td style="text-align:right;font-weight:700;color:#b8860b;">${fmtP(tot,o.currency)}</td>
       <td style="text-align:right;color:#10b981;font-weight:600;">${paid>0?fmtP(paid,o.currency):'<span style="color:var(--tx3);">—</span>'}${paymentsHtml}</td>
@@ -2498,7 +2509,7 @@ function renderFacturado(){
     return`<tr>
       <td><span class="fin-badge-inv">${o.invoiceNumber||'—'}</span></td>
       <td style="font-size:11px;color:var(--tx2);">${o.invoiceDate?fmtD(o.invoiceDate):'—'}</td>
-      <td><div style="font-weight:600;font-size:12px;">${o.dentist}</div><div style="font-size:10px;color:var(--tx2);">${o.patient}</div></td>
+      <td><div style="font-weight:600;font-size:12px;">${o.caseType&&o.caseType!=='normal'?'<span style="display:inline-block;background:'+(o.caseType==='garantia'?'#7c3aed':'#0369a1')+';color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-right:4px;">'+(o.sinCosto?'🆓 ':'')+( o.caseType==='garantia'?'GARANTÍA':'REPETICIÓN')+'</span>':''  }${o.dentist}</div><div style="font-size:10px;color:var(--tx2);">${o.patient}</div></td>
       <td style="font-size:11px;max-width:120px;">${caseMain(o)}</td>
       <td style="text-align:right;font-weight:700;color:#b8860b;">${fmtP(tot,o.currency)}</td>
       <td style="text-align:right;color:#10b981;font-weight:600;">${fmtP(paid,o.currency)}${paymentsHtml}</td>
