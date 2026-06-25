@@ -3152,7 +3152,7 @@ function renderDespachos(){
       <td style="font-size:11px;font-weight:700;color:var(--teal);">${sh.trackingNumber||'<span style="color:var(--tx3);font-weight:400;">—</span>'}</td>
       <td style="font-size:11px;color:var(--tx2);">${sh.dispatchDate?fmtD(sh.dispatchDate):fmtD(o.deliveryDate)}</td>
       <td>
-        ${!isDisp?`<button class="btn btn-ok btn-sm" onclick="event.stopPropagation();openDet('${o.id}')">Despachar →</button>`:'<span style="font-size:11px;color:#10b981;font-weight:600;">✓ Enviado</span>'}
+        ${!isDisp?`<button class="btn btn-ok btn-sm" onclick="event.stopPropagation();openDispatchForm('${o.id}')">Despachar →</button>`:'<span style="font-size:11px;color:#10b981;font-weight:600;">✓ Enviado</span>'}
       </td>
     </tr>`;
   }).join('')||`<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--tx3);">Sin casos en este estado.</td></tr>`;
@@ -3635,7 +3635,7 @@ function openDet(id){
   const stageActBtns=TERM.includes(o.status)?'<span style="font-size:11px;color:#10b981;font-weight:700;">✓ Caso finalizado</span>':`
     <div style="display:flex;gap:8px;">
       ${curIdx>0?`<button class="btn" style="border-color:#fca5a5;color:#ef4444;" onclick="closeDet();openStageMove('${o.id}',-1)">← Devolver</button>`:''}
-      ${curIdx<STAGES.length-1?`<button class="btn btn-p" onclick="closeDet();openStageMove('${o.id}',1)">Avanzar a ${STAGES[curIdx+1]?.lbl} →</button>`:''}
+      ${curIdx<STAGES.length-1?`<button class="btn btn-p" onclick="closeDet();openStageMove('${o.id}',1)">Avanzar a ${STAGES[curIdx+1]?.lbl} →</button>`:o.status==='dispatch'?`<button class="btn btn-ok" onclick="closeDet();openDispatchForm('${o.id}')">🚚 Confirmar Despacho</button>`:''}
     </div>`;
   document.getElementById('detBody').innerHTML=`
     <!-- ESTADO + URGENCIA + ENTREGA -->
@@ -4147,6 +4147,43 @@ function updateCase(){
 }
 
 let _smovId=null,_smovDir=null;
+
+let _dispFormId=null;
+function openDispatchForm(id){
+  _dispFormId=id;
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  if(!document.getElementById('dispatchForm')){
+    const m=document.createElement('div');m.id='dispatchForm';m.className='smov-wrap hide';
+    m.innerHTML='<div class="smov-box"><div class="smov-hdr"><h3>🚚 Confirmar Despacho</h3><button onclick="closeDispatchForm()" style="background:none;border:none;color:var(--tx2);font-size:18px;cursor:pointer;line-height:1;">×</button></div><div class="smov-body"><div style="font-size:11px;color:var(--tx2);margin-bottom:12px;" id="dispFormSub"></div><div><label class="flbl req">Transportadora</label><input class="fi" id="dispTransportadora" placeholder="Ej: Servientrega, Coordinadora..." type="text"/></div><div style="margin-top:10px;"><label class="flbl req">Número de Guía</label><input class="fi" id="dispGuia" placeholder="Número de guía de envío..." type="text"/></div><div style="margin-top:10px;"><label class="flbl">Responsable del despacho</label><select class="fi" id="dispResp"></select></div></div><div class="smov-foot"><button class="btn btn-ghost" onclick="closeDispatchForm()">Cancelar</button><button class="btn btn-ok" onclick="confirmDispatch()">✓ Despachar</button></div></div>';
+    document.body.appendChild(m);
+  }
+  document.getElementById('dispFormSub').textContent='Caso '+(o.internalId||o.id);
+  document.getElementById('dispTransportadora').value=o.transportadora||'';
+  document.getElementById('dispGuia').value=o.guia||'';
+  const emps=EMP_BY_STAGE['dispatch']||ALL_EMPS;
+  document.getElementById('dispResp').innerHTML=emps.map(e=>`<option value="${e}">${e}</option>`).join('');
+  document.getElementById('dispatchForm').classList.remove('hide');
+}
+function closeDispatchForm(){
+  const el=document.getElementById('dispatchForm');if(el)el.classList.add('hide');
+  _dispFormId=null;
+}
+function confirmDispatch(){
+  if(!_dispFormId)return;
+  const o=orders.find(x=>x.id===_dispFormId);if(!o)return;
+  const transportadora=document.getElementById('dispTransportadora').value.trim();
+  const guia=document.getElementById('dispGuia').value.trim();
+  if(!transportadora){alert('Por favor ingresa la transportadora.');return;}
+  if(!guia){alert('Por favor ingresa el número de guía.');return;}
+  const resp=document.getElementById('dispResp').value;
+  o.status='dispatched';o.transportadora=transportadora;o.guia=guia;
+  if(!o.responsibles)o.responsibles={};
+  o.responsibles['dispatch']=resp;
+  const entry={stage:'dispatched',at:new Date().toISOString(),by:resp||'',mote:'Transportadora: '+transportadora+' | Guía: '+guia};
+  if(!o.history)o.history=[];
+  o.history.push(entry);
+  closeDispatchForm();save();
+}
 function openStageMove(id,dir){
   _smovId=id;_smovDir=dir;
   const o=orders.find(x=>x.id===id);if(!o)return;
