@@ -3557,7 +3557,7 @@ function renderHistorial(){
   const periodDays=parseInt(document.getElementById('histPeriod')?.value||'0')||0;
   const cutoff=periodDays?Date.now()-periodDays*86400000:0;
   const list=orders.filter(o=>{
-    if(!o.isArchived)return false;
+    if(!o.isArchived&&!TERM.includes(o.status))return false;
     if(search&&![o.id,o.dentist,o.patient].some(v=>v&&v.toLowerCase().includes(search)))return false;
     if(cutoff&&o.archivedAt&&new Date(o.archivedAt).getTime()<cutoff)return false;
     return true;
@@ -4182,7 +4182,7 @@ function confirmDispatch(){
   const entry={stage:'dispatched',at:new Date().toISOString(),by:resp||'',mote:'Transportadora: '+transportadora+' | Guía: '+guia};
   if(!o.history)o.history=[];
   o.history.push(entry);
-  closeDispatchForm();save();
+  closeDispatchForm();save();renderAll();
 }
 function openStageMove(id,dir){
   _smovId=id;_smovDir=dir;
